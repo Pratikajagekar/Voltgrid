@@ -1,0 +1,1007 @@
+{% extends "base.html" %}
+{% block title %}Route Planner — VoltGrid{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+
+<style>
+/* ============================================
+   VOLTGRID ROUTE PLANNER — FOREST GREEN THEME
+   UI redesign only; preserves existing behavior
+   ============================================ */
+
+:root {
+    --vg-bg: #0F1F16;
+    --vg-panel: #13291C;
+    --vg-card: #192F21;
+    --vg-lime: #A7F432;
+    --vg-teal: #3B8F7B;
+    --vg-sage: #EAF3E7;
+    --vg-muted: #A7BCA9;
+    --vg-border: rgba(59,143,123,.34);
+}
+
+/* PAGE BACKGROUND */
+body:has([x-data="routePlannerApp()"]) {
+    background: var(--vg-bg) !important;
+}
+
+body:has([x-data="routePlannerApp()"]) #content {
+    background: transparent !important;
+}
+
+body:has([x-data="routePlannerApp()"]) .max-w-7xl {
+    color: var(--vg-sage);
+}
+
+/* BACKGROUND IMAGE WITH DARK OVERLAY */
+body:has([x-data="routePlannerApp()"]) .max-w-7xl.mx-auto {
+    position: relative;
+    isolation: isolate;
+}
+
+body:has([x-data="routePlannerApp()"]) .max-w-7xl.mx-auto::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background:
+        linear-gradient(
+            115deg,
+            rgba(5,20,13,.91),
+            rgba(9,31,20,.80),
+            rgba(5,20,13,.91)
+        ),
+        url("/static/images/voltgrid-vehicles-bg.png")
+        center / cover no-repeat;
+}
+
+/* PAGE TITLE */
+body:has([x-data="routePlannerApp()"]) h1 {
+    color: var(--vg-sage) !important;
+    font-weight: 850;
+    letter-spacing: -.7px;
+}
+
+body:has([x-data="routePlannerApp()"]) h1 .text-blue-600 {
+    color: var(--vg-lime) !important;
+}
+
+body:has([x-data="routePlannerApp()"]) h1 i {
+    color: var(--vg-lime) !important;
+}
+
+body:has([x-data="routePlannerApp()"]) p.text-slate-400 {
+    color: var(--vg-muted) !important;
+    line-height: 1.8;
+}
+
+/* ALL MAIN PANELS */
+body:has([x-data="routePlannerApp()"]) .rounded-xl.border {
+    border-color: var(--vg-border) !important;
+}
+
+body:has([x-data="routePlannerApp()"]) .bg-white,
+body:has([x-data="routePlannerApp()"]) .bg-slate-50 {
+    background-color: rgba(15,38,25,.94) !important;
+}
+
+body:has([x-data="routePlannerApp()"]) .shadow-sm {
+    box-shadow: 0 16px 45px rgba(0,0,0,.24) !important;
+}
+
+/* TRIP INPUT PANEL */
+body:has([x-data="routePlannerApp()"]) .max-w-7xl > .rounded-xl {
+    background: rgba(15,38,25,.91) !important;
+    border-color: var(--vg-border) !important;
+    border-radius: 18px !important;
+    box-shadow: 0 18px 45px rgba(0,0,0,.23);
+    backdrop-filter: blur(12px);
+}
+
+/* FORM LABELS */
+body:has([x-data="routePlannerApp()"]) label {
+    color: #BDD0BE !important;
+    font-weight: 650;
+}
+
+/* INPUTS AND SELECTS */
+body:has([x-data="routePlannerApp()"]) input[type="text"],
+body:has([x-data="routePlannerApp()"]) input[type="number"],
+body:has([x-data="routePlannerApp()"]) input[type="date"],
+body:has([x-data="routePlannerApp()"]) select,
+body:has([x-data="routePlannerApp()"]) textarea {
+    color: var(--vg-sage) !important;
+    background-color: #0D2015 !important;
+    border: 1px solid #355642 !important;
+    border-radius: 11px !important;
+    transition: border-color .2s, box-shadow .2s;
+}
+
+body:has([x-data="routePlannerApp()"]) input::placeholder,
+body:has([x-data="routePlannerApp()"]) textarea::placeholder {
+    color: #829987 !important;
+}
+
+body:has([x-data="routePlannerApp()"]) input:focus,
+body:has([x-data="routePlannerApp()"]) select:focus,
+body:has([x-data="routePlannerApp()"]) textarea:focus {
+    outline: none !important;
+    border-color: var(--vg-lime) !important;
+    box-shadow: 0 0 0 3px rgba(167,244,50,.12) !important;
+}
+
+body:has([x-data="routePlannerApp()"]) select option {
+    color: var(--vg-sage);
+    background: #10291B;
+}
+
+body:has([x-data="routePlannerApp()"]) input[type="checkbox"] {
+    accent-color: var(--vg-lime);
+}
+
+/* LOCATION BUTTON */
+body:has([x-data="routePlannerApp()"]) button.bg-blue-50 {
+    color: var(--vg-lime) !important;
+    background: rgba(59,143,123,.12) !important;
+    border-color: var(--vg-border) !important;
+}
+
+body:has([x-data="routePlannerApp()"]) button.bg-blue-50:hover {
+    color: #0F1F16 !important;
+    background: var(--vg-lime) !important;
+}
+
+/* PRIMARY FIND ROUTE BUTTON */
+body:has([x-data="routePlannerApp()"]) button.bg-blue-600 {
+    color: #0F1F16 !important;
+    background: linear-gradient(110deg,#A7F432,#66DC73) !important;
+    border: none !important;
+    border-radius: 11px !important;
+    font-weight: 850;
+    box-shadow: 0 7px 22px rgba(167,244,50,.12);
+}
+
+body:has([x-data="routePlannerApp()"]) button.bg-blue-600:hover {
+    background: linear-gradient(110deg,#C0FF65,#81E995) !important;
+    transform: translateY(-1px);
+}
+
+body:has([x-data="routePlannerApp()"]) button:disabled {
+    cursor: not-allowed;
+}
+
+/* AUTOCOMPLETE DROPDOWNS */
+body:has([x-data="routePlannerApp()"]) .absolute.z-20 {
+    background: #10291B !important;
+    border-color: var(--vg-border) !important;
+    border-radius: 12px !important;
+    box-shadow: 0 16px 40px rgba(0,0,0,.45) !important;
+}
+
+body:has([x-data="routePlannerApp()"]) .absolute.z-20 button {
+    color: var(--vg-sage) !important;
+    border-color: rgba(59,143,123,.18) !important;
+}
+
+body:has([x-data="routePlannerApp()"]) .absolute.z-20 button:hover {
+    color: var(--vg-lime) !important;
+    background: rgba(59,143,123,.18) !important;
+}
+
+/* TRIP SUMMARY — STATUS COLORS */
+body:has([x-data="routePlannerApp()"]) .border-emerald-200.bg-emerald-50 {
+    color: #CFFFB2 !important;
+    background: rgba(44,110,63,.23) !important;
+    border-color: rgba(167,244,50,.32) !important;
+}
+
+body:has([x-data="routePlannerApp()"]) .border-amber-200.bg-amber-50 {
+    color: #FFE3A0 !important;
+    background: rgba(110,79,25,.24) !important;
+    border-color: rgba(245,190,77,.35) !important;
+}
+
+body:has([x-data="routePlannerApp()"]) .text-slate-900 {
+    color: var(--vg-sage) !important;
+}
+
+body:has([x-data="routePlannerApp()"]) .text-slate-600 {
+    color: #C3D2C4 !important;
+}
+
+body:has([x-data="routePlannerApp()"]) .text-slate-500 {
+    color: #A7BCA9 !important;
+}
+
+body:has([x-data="routePlannerApp()"]) .text-slate-400 {
+    color: #9BB29E !important;
+}
+
+body:has([x-data="routePlannerApp()"]) .text-blue-600,
+body:has([x-data="routePlannerApp()"]) .text-emerald-600 {
+    color: var(--vg-lime) !important;
+}
+
+body:has([x-data="routePlannerApp()"]) .text-red-600 {
+    color: #FF9999 !important;
+}
+
+body:has([x-data="routePlannerApp()"]) .text-amber-400 {
+    color: #F7CD66 !important;
+}
+
+/* MAP CONTAINER — KEEP MAP CLEAR AND BRIGHT */
+body:has([x-data="routePlannerApp()"]) #route-map {
+    height: 520px;
+    width: 100%;
+    border-radius: 13px;
+    overflow: hidden;
+    background: #E5E9E2;
+    border: 1px solid rgba(59,143,123,.45);
+    z-index: 0;
+}
+
+/* IMPORTANT: Don't darken map tiles.
+   Roads, place labels and route must remain readable. */
+body:has([x-data="routePlannerApp()"]) #route-map .leaflet-tile {
+    filter: none !important;
+}
+
+body:has([x-data="routePlannerApp()"]) #route-map .leaflet-container {
+    background: #E5E9E2;
+}
+
+/* MAP CONTROLS */
+body:has([x-data="routePlannerApp()"]) #route-map .leaflet-bar a {
+    color: #183C29 !important;
+    background: #F5FAF1 !important;
+    border-color: #C5D9C8 !important;
+}
+
+body:has([x-data="routePlannerApp()"]) #route-map .leaflet-bar a:hover {
+    color: #10291B !important;
+    background: var(--vg-lime) !important;
+}
+
+body:has([x-data="routePlannerApp()"]) #route-map .leaflet-control-attribution {
+    color: #263C2B !important;
+    background: rgba(250,253,247,.92) !important;
+}
+
+body:has([x-data="routePlannerApp()"]) #route-map .leaflet-control-attribution a {
+    color: #176A50 !important;
+}
+
+/* MAP POPUPS REMAIN LIGHT FOR LEGIBILITY */
+body:has([x-data="routePlannerApp()"]) .leaflet-popup-content-wrapper,
+body:has([x-data="routePlannerApp()"]) .leaflet-popup-tip {
+    color: #17291D !important;
+    background: #F8FBF5 !important;
+    border-radius: 12px !important;
+    box-shadow: 0 10px 30px rgba(0,0,0,.24);
+}
+
+/* STATION CARDS */
+body:has([x-data="routePlannerApp()"]) .space-y-3 > div.rounded-xl {
+    color: var(--vg-sage);
+    background: rgba(17,42,27,.94) !important;
+    border: 1px solid var(--vg-border) !important;
+    border-radius: 15px !important;
+    box-shadow: 0 8px 22px rgba(0,0,0,.16);
+    transition: border-color .2s, transform .2s, background .2s;
+}
+
+body:has([x-data="routePlannerApp()"]) .space-y-3 > div.rounded-xl:hover {
+    border-color: rgba(167,244,50,.5) !important;
+    transform: translateY(-2px);
+}
+
+/* RECOMMENDED STATION */
+body:has([x-data="routePlannerApp()"]) .border-emerald-400\/50.bg-emerald-50 {
+    background: rgba(40,91,45,.30) !important;
+    border-color: rgba(167,244,50,.58) !important;
+}
+
+/* UNREACHABLE STATIONS */
+body:has([x-data="routePlannerApp()"]) .space-y-3 > div.opacity-70 {
+    background: rgba(25,35,28,.8) !important;
+    border-color: rgba(160,170,160,.18) !important;
+}
+
+/* CONNECTOR BADGES */
+body:has([x-data="routePlannerApp()"]) .bg-blue-50.text-blue-600 {
+    color: #B5F1D9 !important;
+    background: rgba(59,143,123,.16) !important;
+    border-color: rgba(59,143,123,.4) !important;
+}
+
+body:has([x-data="routePlannerApp()"]) .bg-emerald-50.text-emerald-600 {
+    color: #D0FF83 !important;
+    background: rgba(167,244,50,.10) !important;
+    border-color: rgba(167,244,50,.30) !important;
+}
+
+body:has([x-data="routePlannerApp()"]) .bg-red-50.text-red-600 {
+    color: #FFA6A6 !important;
+    background: rgba(220,60,60,.10) !important;
+    border-color: rgba(220,60,60,.30) !important;
+}
+
+/* STATION LIST SCROLLBAR */
+body:has([x-data="routePlannerApp()"]) .max-h-\[520px\].overflow-y-auto {
+    scrollbar-width: thin;
+    scrollbar-color: var(--vg-lime) #13291C;
+    overscroll-behavior: contain;
+}
+
+body:has([x-data="routePlannerApp()"]) .max-h-\[520px\].overflow-y-auto::-webkit-scrollbar {
+    width: 7px;
+}
+
+body:has([x-data="routePlannerApp()"]) .max-h-\[520px\].overflow-y-auto::-webkit-scrollbar-track {
+    background: #13291C;
+    border-radius: 10px;
+}
+
+body:has([x-data="routePlannerApp()"]) .max-h-\[520px\].overflow-y-auto::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg,#A7F432,#3B8F7B);
+    border-radius: 10px;
+    border: 1px solid #13291C;
+}
+
+/* MODAL OVERLAY */
+body:has([x-data="routePlannerApp()"]) .fixed.inset-0.z-50 {
+    background: rgba(3,14,8,.86) !important;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+}
+
+/* MODAL CARD */
+body:has([x-data="routePlannerApp()"]) .fixed.inset-0.z-50 > div {
+    color: var(--vg-sage) !important;
+    background: #10291B !important;
+    border: 1px solid rgba(59,143,123,.48) !important;
+    border-radius: 19px !important;
+    box-shadow: 0 25px 80px rgba(0,0,0,.55) !important;
+}
+
+body:has([x-data="routePlannerApp()"]) .fixed.inset-0.z-50 h2 {
+    color: var(--vg-sage) !important;
+}
+
+/* MODAL PAYMENT SUMMARY */
+body:has([x-data="routePlannerApp()"]) .fixed.inset-0 .border-emerald-200.bg-emerald-50 {
+    color: var(--vg-sage) !important;
+    background: rgba(59,143,123,.13) !important;
+    border-color: rgba(167,244,50,.28) !important;
+}
+
+/* PAYMENT UPLOAD */
+body:has([x-data="routePlannerApp()"]) input[type="file"] {
+    width: 100%;
+    padding: 9px;
+    color: var(--vg-muted) !important;
+    background: #0D2015 !important;
+    border: 1px solid #355642 !important;
+    border-radius: 10px;
+}
+
+body:has([x-data="routePlannerApp()"]) input[type="file"]::file-selector-button {
+    margin-right: 10px;
+    padding: 8px 12px;
+    color: #0F1F16;
+    background: var(--vg-lime);
+    border: none;
+    border-radius: 7px;
+    font-weight: 750;
+    cursor: pointer;
+}
+
+/* RESERVATION SUBMIT */
+body:has([x-data="routePlannerApp()"]) .fixed.inset-0 button[type="submit"] {
+    color: #0F1F16 !important;
+    background: linear-gradient(110deg,#A7F432,#66DC73) !important;
+    border: none !important;
+    border-radius: 11px !important;
+    font-weight: 850;
+}
+
+body:has([x-data="routePlannerApp()"]) .fixed.inset-0 button[type="submit"]:hover {
+    filter: brightness(1.08);
+}
+
+/* ERROR MESSAGE */
+body:has([x-data="routePlannerApp()"]) .text-red-600 {
+    color: #FFA3A3 !important;
+}
+
+/* RESPONSIVE */
+@media(max-width:1023px) {
+    body:has([x-data="routePlannerApp()"]) #route-map {
+        height: 450px;
+    }
+}
+
+@media(max-width:639px) {
+    body:has([x-data="routePlannerApp()"]) #route-map {
+        height: 360px;
+    }
+
+    body:has([x-data="routePlannerApp()"]) .max-w-7xl.mx-auto {
+        padding-top: 22px;
+        padding-bottom: 28px;
+    }
+
+    body:has([x-data="routePlannerApp()"]) .fixed.inset-0.z-50 > div {
+        max-height: 90vh;
+        overflow-y: auto;
+        padding: 18px !important;
+    }
+}
+
+/* ACCESSIBILITY */
+body:has([x-data="routePlannerApp()"]) button:focus-visible {
+    outline: 2px solid var(--vg-lime);
+    outline-offset: 3px;
+}
+
+@media(prefers-reduced-motion:reduce) {
+    body:has([x-data="routePlannerApp()"]) *,
+    body:has([x-data="routePlannerApp()"]) *::before,
+    body:has([x-data="routePlannerApp()"]) *::after {
+        transition-duration: .01ms !important;
+        animation-duration: .01ms !important;
+    }
+}
+</style>
+
+{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8" x-data="routePlannerApp()" x-init="init()">
+
+  <div class="mb-6">
+    <h1 class="text-2xl font-bold text-slate-900"><i class="fa-solid fa-route text-blue-600 mr-2"></i>Route Planner</h1>
+    <p class="text-slate-400 text-sm mt-1">Enter your destination and remaining range — VoltGrid finds charging stations along the way and flags the best stop before you run out.</p>
+  </div>
+
+  <!-- Trip inputs -->
+  <div class="rounded-xl border border-blue-100 bg-white p-5 mb-6">
+    <template x-if="vehicles.length">
+      <div class="mb-4">
+        <label class="block text-xs font-mono text-slate-400 mb-1.5">My Vehicle (auto-fills range &amp; plug type)</label>
+        <select x-model="selectedVehicleId" @change="applyVehicle()"
+          class="w-full md:w-1/3 rounded-lg bg-white border border-slate-200 px-4 py-2.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/30">
+          <option value="">Custom (no saved vehicle)</option>
+          <template x-for="v in vehicles" :key="v.id">
+            <option :value="v.id" x-text="v.name + ' — ' + v.plug_type + ' — ' + v.full_range_km + ' km'"></option>
+          </template>
+        </select>
+        <label class="flex items-center gap-2 mt-2 text-xs text-slate-400">
+          <input type="checkbox" x-model="filterByVehiclePlug" class="rounded border-slate-200 bg-white text-blue-600 focus:ring-blue-500/30">
+          Only show stations compatible with this vehicle's plug type
+        </label>
+      </div>
+    </template>
+    <div class="grid md:grid-cols-3 gap-4">
+
+      <!-- Origin -->
+      <div class="relative">
+        <label class="block text-xs font-mono text-slate-400 mb-1.5">Starting Point</label>
+        <div class="flex gap-2">
+          <input type="text" x-model="originQuery" @input.debounce.400ms="searchOrigin()"
+            class="w-full rounded-lg bg-white border border-slate-200 px-4 py-2.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+            placeholder="Search an address, or use live location" autocomplete="off">
+          <button type="button" @click="useMyLocation()"
+            class="shrink-0 px-3 rounded-lg bg-blue-50 border border-blue-300 text-blue-600 hover:bg-blue-600 hover:text-white transition text-sm"
+            title="Use my live location">
+            <i class="fa-solid fa-location-crosshairs"></i>
+          </button>
+        </div>
+        <div x-show="originSuggestions.length" x-cloak
+          class="absolute z-20 mt-1 w-full rounded-lg border border-slate-200 bg-white shadow-sm max-h-56 overflow-y-auto">
+          <template x-for="place in originSuggestions" :key="place.lat + ',' + place.lon">
+            <button type="button" @click="selectOrigin(place)"
+              class="block w-full text-left px-3 py-2 text-xs text-slate-600 hover:bg-blue-50 hover:text-blue-600 border-b border-slate-100 last:border-0">
+              <span x-text="place.display_name"></span>
+            </button>
+          </template>
+        </div>
+        <p class="text-[11px] text-slate-400 mt-1" x-show="locating"><i class="fa-solid fa-spinner fa-spin mr-1"></i>Locating you…</p>
+        <p class="text-[11px] text-slate-400 mt-1" x-show="!locating && originLabel" x-text="originLabel"></p>
+      </div>
+
+      <!-- Destination -->
+      <div class="relative">
+        <label class="block text-xs font-mono text-slate-400 mb-1.5">Destination</label>
+        <input type="text" x-model="destQuery" @input.debounce.400ms="searchDestination()"
+          class="w-full rounded-lg bg-white border border-slate-200 px-4 py-2.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+          placeholder="Search a city, address, landmark…" autocomplete="off">
+        <div x-show="destSuggestions.length" x-cloak
+          class="absolute z-20 mt-1 w-full rounded-lg border border-slate-200 bg-white shadow-sm max-h-56 overflow-y-auto">
+          <template x-for="place in destSuggestions" :key="place.lat + ',' + place.lon">
+            <button type="button" @click="selectDestination(place)"
+              class="block w-full text-left px-3 py-2 text-xs text-slate-600 hover:bg-blue-50 hover:text-blue-600 border-b border-slate-100 last:border-0">
+              <span x-text="place.display_name"></span>
+            </button>
+          </template>
+        </div>
+      </div>
+
+      <!-- Range -->
+      <div>
+        <label class="block text-xs font-mono text-slate-400 mb-1.5">Car's Remaining Range (km)</label>
+        <input type="number" min="1" step="1" x-model.number="rangeKm"
+          class="w-full rounded-lg bg-white border border-slate-200 px-4 py-2.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+          placeholder="e.g. 120">
+      </div>
+    </div>
+
+    <div class="mt-4 flex items-center gap-3">
+      <button type="button" @click="findRoute()" :disabled="loading"
+        class="px-5 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold text-sm transition shadow-sm">
+        <i class="fa-solid" :class="loading ? 'fa-spinner fa-spin' : 'fa-magnifying-glass-location'"></i>
+        <span x-text="loading ? 'Finding route…' : 'Find Route & Charging Stations'"></span>
+      </button>
+      <span x-show="errorMsg" x-cloak class="text-xs text-red-600"><i class="fa-solid fa-triangle-exclamation mr-1"></i><span x-text="errorMsg"></span></span>
+    </div>
+  </div>
+
+  <!-- Trip summary banner -->
+  <template x-if="routeInfo">
+    <div class="rounded-xl border p-4 mb-6"
+      :class="routeInfo.reachable_without_charging ? 'border-emerald-200 bg-emerald-50' : 'border-amber-200 bg-amber-50'">
+      <div class="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
+        <span class="font-mono text-slate-600"><i class="fa-solid fa-road mr-1.5 text-blue-600"></i>Trip distance: <span class="font-bold text-slate-900" x-text="routeInfo.total_distance_km + ' km'"></span></span>
+        <span class="font-mono text-slate-600"><i class="fa-solid fa-clock mr-1.5 text-blue-600"></i>Est. drive time: <span class="font-bold text-slate-900" x-text="routeInfo.duration_min + ' min'"></span></span>
+        <template x-if="routeInfo.reachable_without_charging">
+          <span class="font-semibold text-emerald-600"><i class="fa-solid fa-circle-check mr-1.5"></i>You can reach your destination on your current charge — no stop required.</span>
+        </template>
+        <template x-if="!routeInfo.reachable_without_charging && recommendedStation">
+          <span class="font-semibold text-amber-400">
+            <i class="fa-solid fa-bolt mr-1.5"></i>Recommended charging stop: <span x-text="recommendedStation.name"></span>
+            (<span x-text="recommendedStation.distance_along_route_km"></span> km in)
+          </span>
+        </template>
+        <template x-if="!routeInfo.reachable_without_charging && !recommendedStation">
+          <span class="font-semibold text-red-600"><i class="fa-solid fa-triangle-exclamation mr-1.5"></i>No charging station within range was found along this route — consider a route with more coverage.</span>
+        </template>
+      </div>
+    </div>
+  </template>
+
+  <div class="grid lg:grid-cols-3 gap-6">
+    <!-- Map -->
+    <div class="lg:col-span-2 rounded-xl border border-blue-100 bg-white p-3 shadow-sm">
+      <div id="route-map"></div>
+    </div>
+
+    <!-- Recommended stations along the route -->
+    <div class="space-y-3 max-h-[520px] overflow-y-auto pr-1">
+      <template x-if="!stations.length">
+        <div class="rounded-xl border border-slate-200 bg-slate-50 p-8 text-center text-slate-400 text-sm">
+          <i class="fa-solid fa-route text-2xl mb-2 block"></i>
+          Plan a trip to see charging stops along your route.
+        </div>
+      </template>
+
+      <template x-for="s in stations" :key="s.id">
+        <div class="rounded-xl border p-4 transition"
+          :class="s.id === recommendedStationId ? 'border-emerald-400/50 bg-emerald-50' : (s.reachable ? 'border-slate-200 bg-slate-50' : 'border-slate-100 bg-slate-50 opacity-70')">
+          <div class="flex items-start justify-between">
+            <div>
+              <h3 class="font-semibold text-slate-900 text-sm" x-text="s.name"></h3>
+              <div class="flex items-center gap-1.5 mt-1">
+                <span class="star-row text-amber-400 text-xs" x-text="starString(s.avg_rating)"></span>
+                <span class="text-[11px] text-slate-400" x-text="s.avg_rating ? s.avg_rating.toFixed(1) : 'No ratings'"></span>
+              </div>
+              <span class="inline-block mt-1.5 text-[11px] font-mono px-2 py-0.5 rounded-full bg-blue-50 text-blue-600 border border-blue-200" x-text="s.plug_type"></span>
+              <template x-if="s.id === recommendedStationId">
+                <span class="inline-block mt-1 ml-1 text-[11px] font-mono px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-200">
+                  <i class="fa-solid fa-star mr-0.5"></i>Recommended
+                </span>
+              </template>
+              <template x-if="!s.reachable">
+                <span class="inline-block mt-1 ml-1 text-[11px] font-mono px-2 py-0.5 rounded-full bg-red-50 text-red-600 border border-red-200">Beyond range</span>
+              </template>
+            </div>
+            <div class="flex flex-col items-end gap-1.5">
+              <button type="button" @click="toggleFavorite(s)" class="text-base leading-none" :class="s.is_favorited ? 'text-amber-400' : 'text-slate-500 hover:text-amber-400'">
+                <i class="fa-solid fa-star"></i>
+              </button>
+              <div class="text-emerald-600 font-mono font-bold"><span x-text="s.currency_symbol"></span><span x-text="s.price_per_kwh.toFixed(2)"></span></div>
+            </div>
+          </div>
+          <div class="text-[11px] font-mono text-slate-400 mt-2">
+            <i class="fa-solid fa-signs-post mr-1"></i><span x-text="s.distance_along_route_km"></span> km along route
+            <span class="text-slate-600 mx-1">·</span>
+            <span x-text="s.distance_from_route_km"></span> km off route
+          </div>
+          <button type="button" @click="openReserveModal(s)"
+            class="mt-3 w-full py-1.5 rounded-md bg-blue-50 border border-blue-300 text-blue-600 text-xs font-semibold hover:bg-blue-600 hover:text-white transition">
+            <i class="fa-solid fa-calendar-plus mr-1"></i>Reserve Slot
+          </button>
+        </div>
+      </template>
+    </div>
+  </div>
+
+  <!-- Reservation Modal (same flow as Discover) -->
+  <div x-show="showModal" x-cloak
+    class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-white backdrop-blur-sm"
+    x-transition.opacity>
+    <div @click.outside="showModal = false"
+      class="w-full max-w-lg rounded-2xl border border-blue-200 bg-white shadow-sm p-6">
+      <div class="flex items-center justify-between mb-5">
+        <h2 class="text-lg font-bold text-slate-900">
+          <i class="fa-solid fa-bolt text-blue-600 mr-2"></i>Reserve — <span x-text="selectedStationName"></span>
+        </h2>
+        <button @click="showModal = false" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+      </div>
+
+      <form method="POST" action="{{ url_for('request_booking') }}" class="space-y-4">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="station_id" :value="selectedStationId">
+
+        <div>
+          <label class="block text-xs font-mono text-slate-400 mb-1.5">Reservation Date</label>
+          <input type="date" name="booking_date" x-model="bookingDate" :min="todayStr" required
+            @change="refreshTakenSlots()"
+            class="w-full rounded-lg bg-white border border-slate-200 px-4 py-2.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/30">
+        </div>
+
+        <div>
+          <label class="block text-xs font-mono text-slate-400 mb-1.5">
+            Time Slot
+            <span x-show="loadingSlots" class="text-slate-400"><i class="fa-solid fa-spinner fa-spin ml-1"></i></span>
+          </label>
+          <select name="time_slot" x-model="timeSlot" required
+            class="w-full rounded-lg bg-white border border-slate-200 px-4 py-2.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/30">
+            <option value="">Select a slot</option>
+            <template x-for="slot in allSlots" :key="slot">
+              <option :value="slot" :disabled="takenSlots.includes(slot)" x-text="takenSlots.includes(slot) ? slot + ' (Already Reserved)' : slot"></option>
+            </template>
+          </select>
+          <p class="text-[11px] text-slate-400 mt-1">Slots already reserved by another driver on this date are locked and can't be selected.</p>
+        </div>
+
+        <div>
+          <label class="block text-xs font-mono text-slate-400 mb-1.5">Estimated Energy (kWh)</label>
+          <input type="number" step="0.1" min="0.1" x-model.number="kwh" @input="computeAmount()" required
+            class="w-full rounded-lg bg-white border border-slate-200 px-4 py-2.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+            placeholder="e.g. 12.5">
+        </div>
+
+        <div class="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 flex items-center justify-between">
+          <span class="text-xs font-mono text-slate-400">Total Payable</span>
+          <span class="font-mono font-bold text-emerald-600 text-lg"><span x-text="selectedCurrencySymbol"></span><span x-text="amount.toFixed(2)"></span></span>
+        </div>
+        <input type="hidden" name="amount_paid" :value="amount.toFixed(2)">
+        <input type="hidden" name="energy_kwh" :value="Number(kwh || 0).toFixed(2)">
+        <div class="rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800">
+          <i class="fa-solid fa-circle-info mr-1"></i>Request this slot first. Payment details can be submitted from Transaction History after the station owner accepts your request.
+        </div>
+        <button type="submit"
+          class="w-full py-2.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white font-semibold text-sm transition shadow-sm">
+          <i class="fa-solid fa-calendar-check mr-1.5"></i>Request Charging Slot
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function routePlannerApp() {
+  return {
+    // Trip inputs
+    originLat: null, originLng: null, originLabel: '',
+    originQuery: '', originSuggestions: [],
+    destQuery: '', destSuggestions: [], destLat: null, destLng: null, destLabel: '',
+    rangeKm: null,
+    locating: false, loading: false, errorMsg: '',
+
+    // Vehicle profile
+    vehicles: {{ vehicles|tojson }},
+    selectedVehicleId: '',
+    filterByVehiclePlug: true,
+
+    // Results
+    routeInfo: null,
+    stations: [],
+    recommendedStationId: null,
+    recommendedStation: null,
+
+    // Map
+    map: null, routeLayer: null, originMarker: null, destMarker: null, stationMarkers: [],
+
+    // Reservation modal (mirrors Discover page)
+    showModal: false, selectedStationId: null, selectedStationName: '',
+    pricePerKwh: 0, selectedCurrencySymbol: '\u20b9', kwh: null, amount: 0, bookingDate: '', timeSlot: '',
+    allSlots: ['08:00 - 09:00', '09:00 - 10:00', '12:00 - 13:00', '15:00 - 16:00', '18:00 - 19:00', '20:00 - 21:00'],
+    takenSlots: [], loadingSlots: false,
+    todayStr: new Date().toISOString().split('T')[0],
+
+    init() {
+      this.map = L.map('route-map').setView([20.5937, 78.9629], 5);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors',
+        maxZoom: 19
+      }).addTo(this.map);
+    },
+
+    useMyLocation() {
+      if (!navigator.geolocation) {
+        this.errorMsg = 'Geolocation is not supported by this browser. Search for your starting point instead.';
+        return;
+      }
+      this.locating = true;
+      this.errorMsg = '';
+      this.originSuggestions = [];
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          this.originLat = pos.coords.latitude;
+          this.originLng = pos.coords.longitude;
+          this.originLabel = `Live location (${this.originLat.toFixed(4)}, ${this.originLng.toFixed(4)})`;
+          this.originQuery = '';
+          this.locating = false;
+          if (!this.originMarker) {
+            const carIcon = L.divIcon({
+              className: '',
+              html: `<div style="background:#22d3ee;width:16px;height:16px;border-radius:50%;box-shadow:0 0 12px #22d3ee,0 0 0 3px rgba(34,211,238,0.3);"></div>`,
+              iconSize: [16, 16]
+            });
+            this.originMarker = L.marker([this.originLat, this.originLng], { icon: carIcon }).addTo(this.map);
+          } else {
+            this.originMarker.setLatLng([this.originLat, this.originLng]);
+          }
+          this.originMarker.bindPopup('Your current location').openPopup();
+          this.map.setView([this.originLat, this.originLng], 12);
+        },
+        (err) => {
+          this.locating = false;
+          this.errorMsg = 'Could not get your location — please allow location access, or search for your starting point below.';
+        },
+        { enableHighAccuracy: true, timeout: 10000 }
+      );
+    },
+
+    async searchOrigin() {
+      if (this.originQuery.trim().length < 3) {
+        this.originSuggestions = [];
+        return;
+      }
+      try {
+        const res = await fetch(`{{ url_for('api_geocode') }}?q=${encodeURIComponent(this.originQuery)}`);
+        const data = await res.json();
+        this.originSuggestions = Array.isArray(data) ? data : [];
+      } catch (err) {
+        this.originSuggestions = [];
+      }
+    },
+
+    selectOrigin(place) {
+      this.originLat = place.lat;
+      this.originLng = place.lon;
+      this.originLabel = `Set manually: ${place.display_name}`;
+      this.originQuery = place.display_name;
+      this.originSuggestions = [];
+
+      const carIcon = L.divIcon({
+        className: '',
+        html: `<div style="background:#22d3ee;width:16px;height:16px;border-radius:50%;box-shadow:0 0 12px #22d3ee,0 0 0 3px rgba(34,211,238,0.3);"></div>`,
+        iconSize: [16, 16]
+      });
+      if (!this.originMarker) {
+        this.originMarker = L.marker([this.originLat, this.originLng], { icon: carIcon }).addTo(this.map);
+      } else {
+        this.originMarker.setLatLng([this.originLat, this.originLng]);
+      }
+      this.originMarker.bindPopup('Starting point').openPopup();
+      this.map.flyTo([this.originLat, this.originLng], 12);
+    },
+
+    async searchDestination() {
+      if (this.destQuery.trim().length < 3) {
+        this.destSuggestions = [];
+        return;
+      }
+      try {
+        const res = await fetch(`{{ url_for('api_geocode') }}?q=${encodeURIComponent(this.destQuery)}`);
+        const data = await res.json();
+        this.destSuggestions = Array.isArray(data) ? data : [];
+      } catch (err) {
+        this.destSuggestions = [];
+      }
+    },
+
+    selectDestination(place) {
+      this.destLat = place.lat;
+      this.destLng = place.lon;
+      this.destLabel = place.display_name;
+      this.destQuery = place.display_name;
+      this.destSuggestions = [];
+
+      if (!this.destMarker) {
+        const flagIcon = L.divIcon({
+          className: '',
+          html: `<div style="background:#34d399;width:14px;height:14px;border-radius:3px;box-shadow:0 0 10px #34d399,0 0 0 3px rgba(52,211,153,0.25);"></div>`,
+          iconSize: [14, 14]
+        });
+        this.destMarker = L.marker([this.destLat, this.destLng], { icon: flagIcon }).addTo(this.map);
+      } else {
+        this.destMarker.setLatLng([this.destLat, this.destLng]);
+      }
+      this.destMarker.bindPopup(this.destLabel);
+    },
+
+    async findRoute() {
+      this.errorMsg = '';
+      if (this.originLat === null || this.originLng === null) {
+        this.errorMsg = 'Please set your starting point (use the location button).';
+        return;
+      }
+      if (this.destLat === null || this.destLng === null) {
+        this.errorMsg = 'Please search for and select a destination.';
+        return;
+      }
+      if (!this.rangeKm || this.rangeKm <= 0) {
+        this.errorMsg = "Please enter your car's remaining range in km.";
+        return;
+      }
+
+      this.loading = true;
+      this.routeInfo = null;
+      this.stations = [];
+      this.recommendedStationId = null;
+      this.recommendedStation = null;
+      this.clearStationMarkers();
+      if (this.routeLayer) { this.map.removeLayer(this.routeLayer); this.routeLayer = null; }
+
+      try {
+        const routeRes = await fetch(
+          `{{ url_for('api_route') }}?from_lat=${this.originLat}&from_lng=${this.originLng}&to_lat=${this.destLat}&to_lng=${this.destLng}`
+        );
+        const routeData = await routeRes.json();
+        if (!routeRes.ok) {
+          this.errorMsg = routeData.error || 'Could not compute a route.';
+          this.loading = false;
+          return;
+        }
+
+        this.routeLayer = L.polyline(routeData.coordinates, { color: '#22d3ee', weight: 4, opacity: 0.85 }).addTo(this.map);
+        this.map.fitBounds(this.routeLayer.getBounds(), { padding: [40, 40] });
+
+        const stationsRes = await fetch('{{ url_for("api_stations_along_route") }}', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            coordinates: routeData.coordinates,
+            range_km: this.rangeKm,
+            plug_type: this.currentPlugTypeFilter()
+          })
+        });
+        const stationsData = await stationsRes.json();
+        if (!stationsRes.ok) {
+          this.errorMsg = stationsData.error || 'Could not fetch charging stations.';
+          this.loading = false;
+          return;
+        }
+
+        this.routeInfo = {
+          total_distance_km: routeData.distance_km,
+          duration_min: routeData.duration_min,
+          reachable_without_charging: stationsData.reachable_without_charging
+        };
+        this.stations = stationsData.stations;
+        this.recommendedStationId = stationsData.recommended_station_id;
+        this.recommendedStation = this.stations.find(s => s.id === this.recommendedStationId) || null;
+
+        this.renderStationMarkers();
+      } catch (err) {
+        this.errorMsg = 'Something went wrong while planning your trip. Please try again.';
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    clearStationMarkers() {
+      this.stationMarkers.forEach(m => this.map.removeLayer(m));
+      this.stationMarkers = [];
+    },
+
+    renderStationMarkers() {
+      this.stations.forEach(s => {
+        const color = s.id === this.recommendedStationId ? '#34d399' : (s.reachable ? '#22d3ee' : '#64748b');
+        const icon = L.divIcon({
+          className: '',
+          html: `<div style="background:${color};width:14px;height:14px;border-radius:50%;box-shadow:0 0 10px ${color},0 0 0 3px rgba(148,163,184,0.2);"></div>`,
+          iconSize: [14, 14]
+        });
+        const marker = L.marker([s.latitude, s.longitude], { icon }).addTo(this.map);
+        marker.bindPopup(`
+          <div style="min-width:180px;font-family:Inter,sans-serif;">
+            <div style="font-weight:700;margin-bottom:4px;color:#0f172a;">${s.name}</div>
+            <div style="font-size:11px;color:#64748b;margin-bottom:4px;">${s.plug_type}</div>
+            <div style="color:#059669;font-weight:700;">${s.currency_symbol}${s.price_per_kwh.toFixed(2)} / kWh</div>
+            <div style="font-size:11px;color:#64748b;margin-top:4px;">${s.distance_along_route_km} km along route</div>
+          </div>
+        `);
+        marker.on('click', () => this.openReserveModal(s));
+        this.stationMarkers.push(marker);
+      });
+    },
+
+    openReserveModal(s) {
+      this.selectedStationId = s.id;
+      this.selectedStationName = s.name;
+      this.pricePerKwh = s.price_per_kwh;
+      this.selectedCurrencySymbol = s.currency_symbol;
+      this.kwh = null;
+      this.amount = 0;
+      this.bookingDate = this.todayStr;
+      this.timeSlot = '';
+      this.takenSlots = [];
+      this.showModal = true;
+      this.refreshTakenSlots();
+    },
+
+    async refreshTakenSlots() {
+      if (!this.selectedStationId || !this.bookingDate) return;
+      this.loadingSlots = true;
+      try {
+        const res = await fetch(`{{ url_for('api_station_slots') }}?station_id=${this.selectedStationId}&booking_date=${this.bookingDate}`);
+        const data = await res.json();
+        this.takenSlots = data.taken_slots || [];
+        if (this.takenSlots.includes(this.timeSlot)) {
+          this.timeSlot = '';
+        }
+      } catch (err) {
+        console.error('Failed to load slot availability', err);
+      } finally {
+        this.loadingSlots = false;
+      }
+    },
+
+    computeAmount() {
+      const kwhVal = parseFloat(this.kwh) || 0;
+      this.amount = kwhVal * this.pricePerKwh;
+    },
+
+    applyVehicle() {
+      if (!this.selectedVehicleId) return;
+      const v = this.vehicles.find(x => String(x.id) === String(this.selectedVehicleId));
+      if (v) {
+        this.rangeKm = v.full_range_km;
+      }
+    },
+
+    currentPlugTypeFilter() {
+      if (!this.selectedVehicleId || !this.filterByVehiclePlug) return null;
+      const v = this.vehicles.find(x => String(x.id) === String(this.selectedVehicleId));
+      return v ? v.plug_type : null;
+    },
+
+    starString(avgRating) {
+      if (!avgRating) return '☆☆☆☆☆';
+      const filled = Math.round(avgRating);
+      return '★'.repeat(filled) + '☆'.repeat(5 - filled);
+    },
+
+    async toggleFavorite(s) {
+      try {
+        const res = await fetch(`/toggle_favorite/${s.id}`, { method: 'POST' });
+        const data = await res.json();
+        s.is_favorited = !!data.favorited;
+      } catch (err) {
+        console.error('Failed to toggle favorite', err);
+      }
+    }
+  }
+}
+</script>
+{% endblock %}

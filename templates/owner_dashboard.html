@@ -1,0 +1,299 @@
+{% extends "base.html" %}
+
+{% block title %}Owner Console — VoltGrid{% endblock %}
+
+{% block content %}
+<div class="vg-owner-console max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8" x-data="ownerApp()">
+<style>
+/* VoltGrid reference-image styling only; existing Flask/Jinja/Alpine functionality stays intact. */
+.vg-owner-console {
+  --vg-lime:#c9ff65; --vg-lime-soft:#a8df52; --vg-mint:#7df0bd;
+  --vg-panel:rgba(8,25,21,.88); --vg-line:rgba(201,255,101,.18);
+  color:#f3f8ef; position:relative; isolation:isolate;
+}
+.vg-owner-console:before {
+  content:""; position:fixed; inset:0; z-index:-2; pointer-events:none;
+  background:linear-gradient(115deg,rgba(3,15,12,.91),rgba(5,22,17,.78) 55%,rgba(5,15,14,.91)),
+    url("{{ url_for('static', filename='images/voltgrid-background.png') }}") center/cover no-repeat;
+}
+.vg-owner-console:after { content:""; position:fixed; inset:0; z-index:-1; pointer-events:none; background:radial-gradient(ellipse at 80% 10%,rgba(201,255,101,.08),transparent 35%); }
+.vg-owner-console > .mb-8:first-child {
+  position:relative; overflow:hidden; padding:2rem 2.1rem!important; margin-bottom:1.5rem!important;
+  border:1px solid rgba(201,255,101,.25)!important; border-radius:24px!important;
+  background:linear-gradient(110deg,rgba(14,43,31,.96),rgba(9,25,23,.84))!important;
+  box-shadow:0 18px 55px rgba(0,0,0,.25);
+}
+.vg-owner-console > .mb-8:first-child:after { content:""; position:absolute; right:-38px; top:-110px; width:260px; height:260px; border:1px solid rgba(201,255,101,.18); border-radius:50%; box-shadow:0 0 0 24px rgba(201,255,101,.025),0 0 0 52px rgba(201,255,101,.02); }
+.vg-owner-console h1 { font-size:clamp(2rem,3vw,2.7rem)!important; line-height:1.1; letter-spacing:-.055em; color:#f6ffe9!important; }
+.vg-owner-console h2 { letter-spacing:-.025em; font-size:1.08rem; }
+.vg-owner-console .grid.sm\:grid-cols-3 > div {
+  min-height:118px; padding:1.35rem 1.45rem!important; border-radius:19px!important;
+  background:linear-gradient(135deg,rgba(17,47,35,.94),rgba(8,25,23,.92))!important;
+  border:1px solid rgba(201,255,101,.2)!important; box-shadow:0 14px 34px rgba(0,0,0,.2);
+  transition:transform .2s ease,border-color .2s ease,background .2s ease;
+}
+.vg-owner-console .grid.sm\:grid-cols-3 > div:hover { transform:translateY(-3px); border-color:rgba(201,255,101,.5)!important; }
+.vg-owner-console .rounded-xl.border, .vg-owner-console .rounded-2xl { border-radius:20px!important; }
+.vg-owner-console .bg-slate-900\/40, .vg-owner-console .bg-slate-900\/60 {
+  background:linear-gradient(145deg,rgba(12,34,28,.94),rgba(7,21,21,.91))!important;
+  border-color:rgba(201,255,101,.16)!important; backdrop-filter:blur(14px);
+  box-shadow:0 15px 38px rgba(0,0,0,.18);
+}
+.vg-owner-console .border-slate-700, .vg-owner-console .border-slate-700\/60 { border-color:rgba(180,211,184,.16)!important; }
+.vg-owner-console form input:not([type=hidden]), .vg-owner-console form select, .vg-owner-console form textarea {
+  min-height:46px; border-radius:12px!important; color:#f1f8ec!important;
+  background:rgba(3,15,14,.82)!important; border:1px solid rgba(178,210,184,.22)!important;
+  transition:border-color .18s ease,box-shadow .18s ease;
+}
+.vg-owner-console form input::placeholder, .vg-owner-console form textarea::placeholder { color:#789187!important; }
+.vg-owner-console form input:focus, .vg-owner-console form select:focus, .vg-owner-console form textarea:focus { border-color:var(--vg-lime)!important; box-shadow:0 0 0 3px rgba(201,255,101,.11)!important; outline:none!important; }
+.vg-owner-console select option { background:#10251e; color:#f1f8ec; }
+.vg-owner-console button { transition:transform .18s ease,filter .18s ease,background .18s ease; }
+.vg-owner-console button:hover:not(:disabled) { filter:brightness(1.08); }
+.vg-owner-console button[type=submit] { border-radius:12px!important; }
+.vg-owner-console .bg-cyan-400 { background:var(--vg-lime)!important; }
+.vg-owner-console .hover\:bg-cyan-300:hover { background:#dcff9b!important; }
+.vg-owner-console .text-cyan-400, .vg-owner-console .text-cyan-300 { color:var(--vg-lime)!important; }
+.vg-owner-console .border-cyan-500\/20, .vg-owner-console .border-cyan-400\/20 { border-color:rgba(201,255,101,.22)!important; }
+.vg-owner-console .space-y-3 > div.rounded-lg { background:rgba(255,255,255,.025); border-radius:14px!important; transition:background .18s,border-color .18s; }
+.vg-owner-console .space-y-3 > div.rounded-lg:hover { background:rgba(201,255,101,.035); border-color:rgba(201,255,101,.25)!important; }
+.vg-owner-console .text-emerald-400 { color:var(--vg-mint)!important; }
+.vg-owner-console .bg-emerald-400 { background:var(--vg-mint)!important; }
+.vg-owner-console .text-amber-400 { color:#f4cf79!important; }
+.vg-owner-console .bg-amber-400\/5 { background:rgba(244,207,121,.07)!important; }
+.vg-owner-console .text-slate-400 { color:#a9c0b4!important; }
+.vg-owner-console .text-slate-500 { color:#829b8e!important; }
+.vg-owner-console .text-slate-600 { color:#71867b!important; }
+.vg-owner-console [x-cloak] { display:none!important; }
+@media(max-width:640px) {
+ .vg-owner-console { padding-top:1.1rem!important; padding-bottom:1.5rem!important; }
+ .vg-owner-console > .mb-8:first-child { padding:1.35rem!important; border-radius:18px!important; }
+ .vg-owner-console .grid.sm\:grid-cols-3 > div { padding:1rem!important; min-height:100px; }
+ .vg-owner-console .grid.grid-cols-2 { gap:.55rem!important; }
+ .vg-owner-console .grid.lg\:grid-cols-2 { gap:1rem!important; }
+}
+@media(prefers-reduced-motion:reduce) { .vg-owner-console * { transition:none!important; } }
+</style>
+
+  <div class="mb-8">
+    <h1 class="text-2xl font-bold text-white">Owner Console</h1>
+    <p class="text-slate-400 text-sm mt-1">Manage your stations and verify incoming payments</p>
+  </div>
+
+  {% if current_user.kyc_status == 'Pending' %}
+  <div class="mb-8 rounded-xl border border-amber-400/30 bg-amber-400/5 p-5 flex items-start gap-3">
+    <i class="fa-solid fa-hourglass-half text-amber-400 text-lg mt-0.5"></i>
+    <div>
+      <div class="font-semibold text-amber-300">KYC verification pending</div>
+      <div class="text-sm text-slate-400 mt-0.5">An admin is reviewing your submitted document. You can't add stations until it's approved.</div>
+    </div>
+  </div>
+  {% elif current_user.kyc_status == 'Rejected' %}
+  <div class="mb-8 rounded-xl border border-red-400/30 bg-red-400/5 p-5 flex items-start gap-3">
+    <i class="fa-solid fa-triangle-exclamation text-red-400 text-lg mt-0.5"></i>
+    <div>
+      <div class="font-semibold text-red-300">KYC verification rejected</div>
+      <div class="text-sm text-slate-400 mt-0.5">{{ current_user.kyc_rejection_reason or 'Please contact support.' }}</div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Revenue Dashboard -->
+  <div class="grid sm:grid-cols-3 gap-4 mb-8">
+    <div class="rounded-xl border border-emerald-400/20 bg-emerald-400/5 p-5">
+      <div class="text-xs font-mono text-slate-400 mb-1"><i class="fa-solid fa-sack-dollar mr-1"></i>Total Earnings</div>
+      <div class="text-2xl font-bold text-emerald-400 font-mono">₹{{ "%.2f"|format(total_earnings) }}</div>
+    </div>
+    <div class="rounded-xl border border-cyan-400/20 bg-cyan-400/5 p-5">
+      <div class="text-xs font-mono text-slate-400 mb-1"><i class="fa-solid fa-charging-station mr-1"></i>Active Stations</div>
+      <div class="text-2xl font-bold text-cyan-400 font-mono">{{ active_station_count }} / {{ stations|length }}</div>
+    </div>
+    <div class="rounded-xl border border-slate-700 bg-slate-900/60 p-5">
+      <div class="text-xs font-mono text-slate-400 mb-1"><i class="fa-solid fa-calendar-check mr-1"></i>Total Bookings</div>
+      <div class="text-2xl font-bold text-white font-mono">{{ total_bookings }}</div>
+    </div>
+  </div>
+
+  <div class="grid lg:grid-cols-2 gap-6">
+    <!-- Station Registration + List -->
+    <div class="space-y-6">
+      <div class="rounded-xl border border-cyan-500/20 bg-slate-900/40 p-5">
+        <h2 class="font-semibold text-white mb-4"><i class="fa-solid fa-plus text-cyan-400 mr-2"></i>Register New Station</h2>
+        <form method="POST" action="{{ url_for('add_station') }}" class="space-y-3">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="text" name="name" required placeholder="Station Name" class="w-full rounded-lg bg-slate-950 border border-slate-700 px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-cyan-400/50">
+          <select name="plug_type" required class="w-full rounded-lg bg-slate-950 border border-slate-700 px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-cyan-400/50">
+            <option value="">Select Plug Type</option>
+            {% for pt in plug_types %}<option value="{{ pt }}">{{ pt }}</option>{% endfor %}
+          </select>
+          <input type="number" step="0.01" min="0.01" name="price_per_kwh" required placeholder="Price per kWh (₹)" class="w-full rounded-lg bg-slate-950 border border-slate-700 px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-cyan-400/50">
+          <div class="grid grid-cols-2 gap-3">
+            <input type="number" step="any" name="latitude" required placeholder="Latitude" class="w-full rounded-lg bg-slate-950 border border-slate-700 px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-cyan-400/50">
+            <input type="number" step="any" name="longitude" required placeholder="Longitude" class="w-full rounded-lg bg-slate-950 border border-slate-700 px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-cyan-400/50">
+          </div>
+          <p class="text-[11px] text-slate-500"><i class="fa-solid fa-circle-info mr-1"></i>Tip: right-click a location on <a href="https://www.openstreetmap.org" target="_blank" rel="noopener" class="text-cyan-400 hover:underline">OpenStreetMap</a> to copy coordinates.</p>
+          <select name="status" class="w-full rounded-lg bg-slate-950 border border-slate-700 px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-cyan-400/50">
+            <option value="Online">Online</option><option value="Offline">Offline</option>
+          </select>
+          <button type="submit" {{ 'disabled' if not current_user.kyc_approved }} class="w-full py-2.5 rounded-lg bg-cyan-400 hover:bg-cyan-300 disabled:opacity-40 disabled:cursor-not-allowed text-slate-950 font-semibold text-sm transition shadow-glow"><i class="fa-solid fa-tower-broadcast mr-1.5"></i>Register Station</button>
+        </form>
+      </div>
+
+      <div class="rounded-xl border border-slate-700/60 bg-slate-900/40 p-5">
+        <h2 class="font-semibold text-white mb-4"><i class="fa-solid fa-list text-cyan-400 mr-2"></i>Your Stations</h2>
+        <div class="space-y-3 max-h-[420px] overflow-y-auto pr-1">
+          {% for s in stations %}
+          <div class="rounded-lg border border-slate-700/60 p-4 flex items-center justify-between gap-3">
+            <div>
+              <div class="font-semibold text-white text-sm">{{ s.name }}</div>
+              <div class="text-[11px] text-slate-500 font-mono mt-0.5">{{ s.plug_type }} · ₹{{ "%.2f"|format(s.price_per_kwh) }}/kWh</div>
+              <div class="text-[10px] text-slate-600 font-mono">{{ "%.4f"|format(s.latitude) }}, {{ "%.4f"|format(s.longitude) }}</div>
+            </div>
+            <div class="flex flex-col items-end gap-2">
+              <span class="text-[11px] font-mono px-2 py-0.5 rounded-full {{ 'bg-emerald-400/10 text-emerald-400 border border-emerald-400/20' if s.status == 'Online' else 'bg-slate-700/40 text-slate-400 border border-slate-600' }}">{{ s.status }}</span>
+              <form method="POST" action="{{ url_for('toggle_station', station_id=s.id) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="text-[11px] text-cyan-400 hover:underline">Switch {{ 'Offline' if s.status == 'Online' else 'Online' }}</button>
+              </form>
+            </div>
+          </div>
+          {% else %}
+          <div class="text-center text-slate-500 text-sm py-6"><i class="fa-solid fa-charging-station text-2xl mb-2 block"></i>No stations registered yet.</div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <!-- EV Driver Slot Booking Requests -->
+    <div class="lg:col-span-2 rounded-xl border border-emerald-400/20 bg-slate-900/40 p-5">
+      <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+        <div>
+          <h2 class="font-semibold text-white"><i class="fa-solid fa-calendar-check text-emerald-400 mr-2"></i>EV Driver Slot Booking Requests</h2>
+          <p class="text-xs text-slate-400 mt-1">Accept a request before the driver can submit payment.</p>
+        </div>
+        <span class="text-xs font-mono px-3 py-1 rounded-full bg-amber-400/10 text-amber-300 border border-amber-400/20">{{ booking_requests|length }} awaiting response</span>
+      </div>
+      <div class="grid md:grid-cols-2 gap-3">
+        {% for b in booking_requests %}
+        <div class="rounded-xl border border-slate-700/60 bg-slate-950/30 p-4">
+          <div class="flex items-start justify-between gap-3">
+            <div>
+              <div class="font-semibold text-white">{{ b.station.name }}</div>
+              <div class="text-sm text-slate-300 mt-1"><i class="fa-solid fa-user mr-1 text-emerald-400"></i>{{ b.driver.username }}</div>
+              <div class="text-xs text-slate-400 mt-1">{{ b.booking_date.strftime('%d %b %Y') }} · {{ b.time_slot }}</div>
+              {% if b.energy_kwh %}<div class="text-xs text-slate-400 mt-1">{{ '%.2f'|format(b.energy_kwh) }} kWh estimated</div>{% endif %}
+            </div>
+            <div class="font-bold text-emerald-300">{{ b.station.currency_symbol }}{{ '%.2f'|format(b.amount_paid) }}</div>
+          </div>
+          <div class="flex gap-2 mt-4">
+            <form method="POST" action="{{ url_for('respond_booking', booking_id=b.id) }}" class="flex-1">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="decision" value="accept">
+              <button type="submit" class="w-full py-2 rounded-lg bg-emerald-400 text-slate-950 text-xs font-bold"><i class="fa-solid fa-check mr-1"></i>Accept Request</button>
+            </form>
+            <form method="POST" action="{{ url_for('respond_booking', booking_id=b.id) }}" class="flex-1" onsubmit="return confirm('Reject this slot request? The slot will be released.');">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="decision" value="reject">
+              <button type="submit" class="w-full py-2 rounded-lg border border-red-400/30 bg-red-400/10 text-red-300 text-xs font-bold"><i class="fa-solid fa-xmark mr-1"></i>Reject</button>
+            </form>
+          </div>
+        </div>
+        {% else %}
+        <div class="md:col-span-2 text-center text-slate-400 text-sm py-7"><i class="fa-regular fa-calendar-check text-2xl mb-2 block text-emerald-400/60"></i>No new slot requests right now.</div>
+        {% endfor %}
+      </div>
+
+      <div class="mt-7 pt-5 border-t border-slate-700/60">
+        <h3 class="font-semibold text-white mb-3"><i class="fa-solid fa-list-check text-cyan-300 mr-2"></i>Reserved Slot Bookings — Accepted EV Drivers</h3>
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm text-left">
+            <thead><tr class="text-slate-400 border-b border-slate-700"><th class="py-3 pr-3">Booking</th><th class="py-3 pr-3">EV Driver</th><th class="py-3 pr-3">Station</th><th class="py-3 pr-3">Reserved Date / Slot</th><th class="py-3 pr-3">Energy</th><th class="py-3 pr-3">Amount</th><th class="py-3">Status</th></tr></thead>
+            <tbody>
+            {% for b in confirmed_slot_bookings %}
+              <tr class="border-b border-slate-800/80"><td class="py-3 pr-3 text-cyan-300 font-mono">VG-BKG-{{ '%06d'|format(b.id) }}</td><td class="py-3 pr-3 text-white">{{ b.driver.username }}</td><td class="py-3 pr-3 text-slate-300">{{ b.station.name }}</td><td class="py-3 pr-3 text-slate-300">{{ b.booking_date.strftime('%d %b %Y') }}<div class="text-xs text-slate-500">{{ b.time_slot }}</div></td><td class="py-3 pr-3 text-slate-300">{{ '%.2f'|format(b.energy_kwh or 0) }} kWh</td><td class="py-3 pr-3 text-emerald-300">{{ b.station.currency_symbol }}{{ '%.2f'|format(b.amount_paid) }}</td><td class="py-3"><span class="inline-flex rounded-full px-2.5 py-1 text-xs {{ 'bg-emerald-400/10 text-emerald-300' if b.status == 'Approved' else 'bg-amber-400/10 text-amber-300' }}">{{ 'Payment verified' if b.status == 'Approved' else ('Payment proof pending' if b.status == 'Pending Verification' else 'Awaiting driver payment') }}</span></td></tr>
+            {% else %}
+              <tr><td colspan="7" class="py-6 text-center text-slate-500">Accepted EV driver slot reservations will appear here.</td></tr>
+            {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Verification Desk -->
+    <div class="rounded-xl border border-amber-400/20 bg-slate-900/40 p-5 h-fit">
+      <h2 class="font-semibold text-white mb-4"><i class="fa-solid fa-shield-halved text-amber-400 mr-2"></i>Payment Verification Desk <span class="ml-2 text-xs font-mono px-2 py-0.5 rounded-full bg-amber-400/10 text-amber-400 border border-amber-400/20">{{ pending_bookings|length }} pending</span></h2>
+      <div class="space-y-3 max-h-[640px] overflow-y-auto pr-1">
+        {% for b in pending_bookings %}
+        <div class="rounded-lg border border-slate-700/60 p-4">
+          <div class="flex items-start justify-between mb-2">
+            <div>
+              <div class="font-semibold text-white text-sm">{{ b.station.name }}</div>
+              <div class="text-[11px] text-slate-500 font-mono">{{ b.driver.username }} · {{ b.booking_date.strftime('%d %b %Y') }} · {{ b.time_slot }}</div>
+            </div>
+            <div class="text-emerald-400 font-mono font-bold text-sm">₹{{ "%.2f"|format(b.amount_paid) }}</div>
+          </div>
+          <div class="text-[11px] font-mono text-slate-400 mb-2">TXN: <span class="text-cyan-300">{{ b.transaction_id }}</span></div>
+          {% if b.payment_proof %}
+          <button type="button" @click="openProof('{{ url_for('uploaded_file', filename=b.payment_proof) }}')" class="text-xs text-cyan-400 hover:underline mb-3"><i class="fa-solid fa-image mr-1"></i>View payment proof</button>
+          {% endif %}
+          <div class="flex gap-2 mt-2">
+            <form method="POST" action="{{ url_for('verify_payment', booking_id=b.id) }}" class="flex-1">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <input type="hidden" name="decision" value="approve">
+              <button type="submit" class="w-full py-1.5 rounded-md bg-emerald-400/10 border border-emerald-400/30 text-emerald-400 text-xs font-semibold hover:bg-emerald-400 hover:text-slate-950 transition"><i class="fa-solid fa-check mr-1"></i>Approve</button>
+            </form>
+            <button type="button" @click="openReject({{ b.id }})" class="flex-1 py-1.5 rounded-md bg-red-400/10 border border-red-400/30 text-red-400 text-xs font-semibold hover:bg-red-400 hover:text-slate-950 transition"><i class="fa-solid fa-xmark mr-1"></i>Reject</button>
+          </div>
+        </div>
+        {% else %}
+        <div class="text-center text-slate-500 text-sm py-6"><i class="fa-solid fa-circle-check text-2xl mb-2 block text-emerald-400/50"></i>No pending payments. All caught up.</div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Proof Preview Modal -->
+  <div x-show="proofModal" x-cloak @click.self="proofModal = false" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-sm">
+    <div class="max-w-lg w-full">
+      <div class="flex justify-end mb-2"><button @click="proofModal = false" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-xl"></i></button></div>
+      <img :src="proofUrl" class="w-full rounded-xl border border-cyan-500/30 shadow-glow">
+    </div>
+  </div>
+
+  <!-- Reject Reason Modal -->
+  <div x-show="rejectModal" x-cloak @click.self="rejectModal = false" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
+    <div class="w-full max-w-md rounded-2xl border border-red-400/30 bg-slate-900 p-6">
+      <h3 class="font-semibold text-white mb-4"><i class="fa-solid fa-triangle-exclamation text-red-400 mr-2"></i>Reject Payment</h3>
+      <form :action="rejectAction" method="POST">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="decision" value="reject">
+        <textarea name="reason" rows="3" placeholder="Reason for rejection (optional)" class="w-full rounded-lg bg-slate-950 border border-slate-700 px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-red-400/50 mb-4"></textarea>
+        <div class="flex gap-2">
+          <button type="button" @click="rejectModal = false" class="flex-1 py-2 rounded-lg border border-slate-700 text-slate-300 text-sm">Cancel</button>
+          <button type="submit" class="flex-1 py-2 rounded-lg bg-red-400 text-slate-950 font-semibold text-sm">Confirm Reject</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function ownerApp() {
+  return {
+    proofModal: false,
+    proofUrl: '',
+    rejectModal: false,
+    rejectAction: '',
+    openProof(url) {
+      this.proofUrl = url;
+      this.proofModal = true;
+    },
+    openReject(bookingId) {
+      this.rejectAction = `/verify_payment/${bookingId}`;
+      this.rejectModal = true;
+    }
+  }
+}
+</script>
+{% endblock %}

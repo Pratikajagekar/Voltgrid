@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{% block title %}VoltGrid — EV Charging Network{% endblock %}</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/alpinejs/3.13.5/cdn.min.js"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: { slate950: '#020617' },
+        fontFamily: { mono: ['JetBrains Mono', 'ui-monospace', 'monospace'] },
+        boxShadow: {
+          glow: '0 0 24px rgba(34,211,238,0.25)',
+          glowEmerald: '0 0 24px rgba(52,211,153,0.25)',
+        }
+      }
+    }
+  }
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  body { font-family: 'Inter', sans-serif; }
+  .font-mono { font-family: 'JetBrains Mono', monospace; }
+  [x-cloak] { display: none !important; }
+
+  /* Authenticated app shell (light theme, matches new design system) */
+  body.app-shell { background-color: #F8FAFC; color: #0F172A; }
+  body.app-shell ::-webkit-scrollbar { width: 8px; height: 8px; }
+  body.app-shell ::-webkit-scrollbar-track { background: #F1F5F9; }
+  body.app-shell ::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 4px; }
+
+  /* Unauthenticated pages (landing/auth) keep the original dark theme */
+  body.public-shell {
+    background-color: #020617; color: #e2e8f0;
+    background-image:
+      linear-gradient(rgba(34,211,238,0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(34,211,238,0.05) 1px, transparent 1px);
+    background-size: 32px 32px;
+  }
+  body.public-shell ::-webkit-scrollbar { width: 8px; height: 8px; }
+  body.public-shell ::-webkit-scrollbar-track { background: #0f172a; }
+  body.public-shell ::-webkit-scrollbar-thumb { background: #164e63; border-radius: 4px; }
+  
+/* =====================================
+   VOLTGRID GLOBAL SIDEBAR THEME
+   ===================================== */
+
+/* Sidebar background */
+aside,
+.sidebar,
+#sidebar,
+nav.sidebar,
+aside nav {
+    background: #0b2117 !important;
+    color: #f3fff5 !important;
+    border-color: #294b36 !important;
+}
+
+/* Sidebar brand/header */
+aside .border-b,
+.sidebar .border-b,
+#sidebar .border-b {
+    background: #0b2117 !important;
+    border-color: #294b36 !important;
+}
+
+aside a,
+.sidebar a,
+#sidebar a,
+aside nav a {
+    color: #d3e8d8 !important;
+    border-radius: 10px;
+    transition: background 0.2s ease, color 0.2s ease;
+}
+
+/* Hover effect */
+aside a:hover,
+.sidebar a:hover,
+#sidebar a:hover,
+aside nav a:hover {
+    background: #173a29 !important;
+    color: #b7ff45 !important;
+}
+
+/* Active navigation item */
+aside a.active,
+.sidebar a.active,
+#sidebar a.active,
+aside nav a.active,
+aside a[aria-current="page"] {
+    background: #1b4932 !important;
+    color: #b7ff45 !important;
+    font-weight: 700;
+}
+
+/* Sidebar icons */
+aside a i,
+.sidebar a i,
+#sidebar a i,
+aside nav a i {
+    color: #85cba0 !important;
+}
+
+aside a:hover i,
+.sidebar a:hover i,
+#sidebar a:hover i {
+    color: #b7ff45 !important;
+}
+
+/* User profile section at bottom */
+aside .border-t,
+.sidebar .border-t,
+#sidebar .border-t {
+    background: #0b2117 !important;
+    border-color: #294b36 !important;
+}
+
+/* User name and role */
+aside .text-slate-900,
+aside .text-gray-900,
+.sidebar .text-slate-900,
+#sidebar .text-slate-900 {
+    color: #f3fff5 !important;
+}
+
+/* Logout */
+aside a[href*="logout"],
+.sidebar a[href*="logout"],
+#sidebar a[href*="logout"] {
+    color: #ff9999 !important;
+}
+
+aside a[href*="logout"]:hover,
+.sidebar a[href*="logout"]:hover,
+#sidebar a[href*="logout"]:hover {
+    background: #482225 !important;
+    color: #ffb3b3 !important;
+}
+
+/* Prevent sidebar children from retaining white backgrounds */
+aside .bg-white,
+.sidebar .bg-white,
+#sidebar .bg-white {
+    background: transparent !important;
+}
+
+/* Global scrollbar */
+html {
+    scrollbar-color: #65b87b #0b2117;
+    scrollbar-width: thin;
+}
+
+html::-webkit-scrollbar {
+    width: 9px;
+}
+
+html::-webkit-scrollbar-track {
+    background: #0b2117;
+}
+
+html::-webkit-scrollbar-thumb {
+    background: #65b87b;
+    border-radius: 10px;
+    border: 2px solid #0b2117;
+}
+
+</style>
+{% block extra_head %}{% endblock %}
+</head>
+<body class="min-h-screen {{ 'app-shell' if current_user.is_authenticated else 'public-shell' }}">
+
+{% if current_user.is_authenticated %}
+<div x-data="{ sidebarOpen: false }" class="min-h-screen">
+
+  <!-- Mobile top bar -->
+  <div class="lg:hidden sticky top-0 z-40 flex items-center justify-between h-14 px-4 bg-white border-b border-slate-200">
+    <button @click="sidebarOpen = true" class="text-slate-500"><i class="fa-solid fa-bars text-lg"></i></button>
+    <div class="flex items-center gap-2">
+      <div class="w-7 h-7 rounded-lg bg-blue-600 flex items-center justify-center">
+        <i class="fa-solid fa-bolt text-white text-xs"></i>
+      </div>
+      <span class="font-bold text-slate-900">Volt<span class="text-blue-600">Grid</span></span>
+    </div>
+    <div class="w-6"></div>
+  </div>
+
+  <!-- Sidebar backdrop (mobile) -->
+  <div x-show="sidebarOpen" x-cloak @click="sidebarOpen = false"
+    class="fixed inset-0 bg-slate-950/50 z-40 lg:hidden"></div>
+
+  <!-- Sidebar -->
+  <aside :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'"
+    class="fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-slate-200 flex flex-col transition-transform duration-200 lg:translate-x-0">
+
+    <div class="h-16 flex items-center gap-2.5 px-5 border-b border-slate-100">
+      <div class="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center shrink-0">
+        <i class="fa-solid fa-bolt text-white text-sm"></i>
+      </div>
+      <span class="font-bold text-slate-900 text-base">Volt<span class="text-blue-600">Grid</span></span>
+      <button @click="sidebarOpen = false" class="ml-auto text-slate-400 lg:hidden"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+
+    <nav class="flex-1 overflow-y-auto py-4 px-3 space-y-1">
+      {% macro navlink(endpoint, icon, label) %}
+      <a href="{{ url_for(endpoint) }}"
+        class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition
+          {{ 'bg-blue-50 text-blue-600' if request.endpoint == endpoint else 'text-slate-600 hover:bg-slate-50 hover:text-slate-900' }}">
+        <i class="fa-solid {{ icon }} w-4 text-center {{ 'text-blue-600' if request.endpoint == endpoint else 'text-slate-400' }}"></i>
+        {{ label }}
+      </a>
+      {% endmacro %}
+
+      {% if current_user.is_vehicle_owner %}
+        {{ navlink('user_dashboard', 'fa-map-location-dot', 'Discover') }}
+        {{ navlink('route_planner', 'fa-route', 'Plan Route') }}
+        {{ navlink('history', 'fa-calendar-check', 'My Bookings') }}
+        {{ navlink('vehicles', 'fa-car-side', 'My Vehicle') }}
+      {% elif current_user.is_station_owner %}
+        {{ navlink('owner_dashboard', 'fa-gauge', 'Dashboard') }}
+      {% elif current_user.is_admin %}
+        {{ navlink('admin_dashboard', 'fa-gauge', 'Dashboard') }}
+        {{ navlink('admin_users', 'fa-users', 'Users') }}
+        {{ navlink('admin_stations', 'fa-charging-station', 'Stations') }}
+        {{ navlink('admin_bookings', 'fa-receipt', 'Bookings') }}
+      {% endif %}
+    </nav>
+
+    <div class="border-t border-slate-100 p-4">
+      <div class="flex items-center gap-3 mb-3">
+        <div class="w-9 h-9 rounded-full flex items-center justify-center text-white font-semibold text-sm shrink-0
+          {{ 'bg-emerald-500' if current_user.is_vehicle_owner else ('bg-purple-500' if current_user.is_admin else 'bg-blue-600') }}">
+          {{ current_user.username[0]|upper }}
+        </div>
+        <div class="min-w-0">
+          <div class="text-sm font-semibold text-slate-900 truncate">{{ current_user.username }}</div>
+          <div class="text-xs text-slate-500">{{ 'Driver' if current_user.is_vehicle_owner else ('Admin' if current_user.is_admin else 'Station Owner') }}</div>
+        </div>
+      </div>
+      <a href="{{ url_for('logout') }}" class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 transition">
+        <i class="fa-solid fa-arrow-right-from-bracket w-4 text-center"></i>Logout
+      </a>
+    </div>
+  </aside>
+
+  <!-- Main content -->
+  <div class="lg:pl-64">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+      <div class="px-4 sm:px-6 lg:px-8 pt-4 space-y-2" x-data="{ shown: true }" x-show="shown" x-cloak>
+        {% for category, message in messages %}
+        <div class="flex items-center justify-between gap-3 rounded-lg border px-4 py-3 text-sm font-medium
+          {{ 'border-emerald-200 bg-emerald-50 text-emerald-700' if category == 'success' }}
+          {{ 'border-red-200 bg-red-50 text-red-700' if category == 'error' }}
+          {{ 'border-amber-200 bg-amber-50 text-amber-700' if category == 'warning' }}">
+          <span><i class="fa-solid {{ 'fa-circle-check' if category == 'success' else 'fa-triangle-exclamation' }} mr-2"></i>{{ message }}</span>
+          <button @click="shown = false" class="opacity-60 hover:opacity-100"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+    {% endwith %}
+
+    <main>
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+</div>
+
+{% else %}
+{# Unauthenticated pages (landing/auth) manage their own nav/hero inside content #}
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 space-y-2" x-data="{ shown: true }" x-show="shown" x-cloak>
+    {% for category, message in messages %}
+    <div class="flex items-center justify-between gap-3 rounded-lg border px-4 py-3 text-sm font-medium
+      {{ 'border-emerald-400/40 bg-emerald-400/10 text-emerald-300' if category == 'success' }}
+      {{ 'border-red-400/40 bg-red-400/10 text-red-300' if category == 'error' }}
+      {{ 'border-amber-400/40 bg-amber-400/10 text-amber-300' if category == 'warning' }}">
+      <span><i class="fa-solid {{ 'fa-circle-check' if category == 'success' else 'fa-triangle-exclamation' }} mr-2"></i>{{ message }}</span>
+      <button @click="shown = false" class="opacity-60 hover:opacity-100"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+{% endwith %}
+
+<main>
+  {{ self.content() }}
+</main>
+
+<footer class="mt-16 border-t border-slate-800/60 py-6">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-xs text-slate-600 font-mono">
+    VOLTGRID // EV CHARGING NETWORK · SECURE PAYMENT VERIFICATION SYSTEM
+  </div>
+</footer>
+{% endif %}
+
+{% block extra_scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,1096 @@
+
+{% extends "base.html" %}
+{% block title %}Discover Stations — VoltGrid{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+
+<style>
+/* =====================================================
+   VOLTGRID DISCOVER STATIONS
+   Forest Green + Lime Green + Teal
+   ===================================================== */
+
+:root {
+    --vg-bg: #0F1F16;
+    --vg-panel: #13251A;
+    --vg-card: #192F21;
+    --vg-lime: #A7F432;
+    --vg-teal: #3B8F7B;
+    --vg-sage: #EAF3E7;
+    --vg-text: #EAF3E7;
+    --vg-muted: #B1C4B3;
+    --vg-border: rgba(59, 143, 123, .32);
+    --vg-input: #11251A;
+}
+
+[x-cloak] {
+    display: none !important;
+}
+
+.discover-shell,
+.discover-shell * {
+    box-sizing: border-box;
+}
+
+.discover-shell {
+    position: relative;
+    isolation: isolate;
+    height: calc(100vh - 64px);
+    min-height: 580px;
+    overflow: hidden;
+    color: var(--vg-text);
+    background:
+        radial-gradient(ellipse at 12% 0%, rgba(59,143,123,.16), transparent 38%),
+        radial-gradient(ellipse at 90% 100%, rgba(167,244,50,.06), transparent 32%),
+        var(--vg-bg);
+    font-family: Inter, "Segoe UI", system-ui, sans-serif;
+}
+
+/* SIDEBAR */
+.discover-shell > div:first-child {
+    background: rgba(15,31,22,.98) !important;
+    border-color: var(--vg-border) !important;
+    color: var(--vg-text);
+    box-shadow: 8px 0 35px rgba(0,0,0,.22);
+}
+
+/* HEADER */
+.discover-shell h1 {
+    color: var(--vg-sage) !important;
+    font-size: 1.4rem;
+    font-weight: 800;
+    letter-spacing: -.6px;
+}
+
+.discover-shell h1::after {
+    content: "";
+    display: block;
+    width: 48px;
+    height: 3px;
+    margin-top: 9px;
+    border-radius: 10px;
+    background: linear-gradient(90deg, var(--vg-lime), var(--vg-teal));
+    box-shadow: 0 0 14px rgba(167,244,50,.18);
+}
+
+.discover-shell h2 {
+    color: var(--vg-sage);
+}
+
+/* BORDERS */
+.discover-shell .border-slate-100,
+.discover-shell .border-slate-200 {
+    border-color: var(--vg-border) !important;
+}
+
+/* SEARCH INPUTS */
+.discover-shell input[type="text"],
+.discover-shell input[type="number"],
+.discover-shell input[type="date"],
+.discover-shell input[type="file"],
+.discover-shell select {
+    color: var(--vg-sage) !important;
+    background-color: var(--vg-input) !important;
+    border: 1px solid #355642 !important;
+    border-radius: 12px !important;
+    transition: border-color .2s, box-shadow .2s;
+}
+
+.discover-shell input::placeholder {
+    color: #8FA895 !important;
+}
+
+.discover-shell input:focus,
+.discover-shell select:focus {
+    outline: none !important;
+    border-color: var(--vg-lime) !important;
+    box-shadow: 0 0 0 3px rgba(167,244,50,.12) !important;
+}
+
+.discover-shell select option {
+    background: var(--vg-panel);
+    color: var(--vg-sage);
+}
+
+/* BUTTON TRANSITIONS */
+.discover-shell button {
+    transition: background .2s, color .2s, border-color .2s,
+                box-shadow .2s, transform .2s;
+}
+
+/* FILTER CHIPS */
+.discover-shell button.rounded-full {
+    border-color: #355642;
+    background-color: #192F21;
+    color: #C6D8C6;
+}
+
+.discover-shell button.rounded-full:hover {
+    border-color: var(--vg-lime);
+    color: var(--vg-lime);
+}
+
+/* ACTIVE CONNECTOR */
+.discover-shell button.bg-blue-600 {
+    color: #0F1F16 !important;
+    background: linear-gradient(115deg, #A7F432, #D0FF83) !important;
+    border-color: transparent !important;
+    box-shadow: 0 4px 18px rgba(167,244,50,.15);
+}
+
+/* FAVORITES FILTER */
+.discover-shell button.bg-amber-400 {
+    background: linear-gradient(120deg, #A7F432, #D0FF83) !important;
+    color: #0F1F16 !important;
+    border-color: transparent !important;
+}
+
+/* STATION LIST */
+.discover-shell .flex-1.overflow-y-auto {
+    scrollbar-width: thin;
+    scrollbar-color: var(--vg-lime) var(--vg-panel);
+}
+
+.discover-shell .flex-1.overflow-y-auto::-webkit-scrollbar {
+    width: 7px;
+}
+
+.discover-shell .flex-1.overflow-y-auto::-webkit-scrollbar-track {
+    background: var(--vg-panel);
+    border-radius: 10px;
+}
+
+.discover-shell .flex-1.overflow-y-auto::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, var(--vg-lime), var(--vg-teal));
+    border-radius: 10px;
+    border: 1px solid var(--vg-panel);
+}
+
+.discover-shell .flex-1.overflow-y-auto::-webkit-scrollbar-thumb:hover {
+    background: #D0FF83;
+}
+
+/* STATION CARDS */
+.discover-shell .flex-1.overflow-y-auto > div {
+    border-color: var(--vg-border) !important;
+}
+
+.discover-shell .flex-1.overflow-y-auto > div:hover {
+    background: linear-gradient(
+        115deg,
+        rgba(59,143,123,.13),
+        rgba(167,244,50,.035)
+    ) !important;
+}
+
+/* STATION TEXT */
+.discover-shell h3 {
+    color: var(--vg-sage) !important;
+    font-size: .9rem;
+    font-weight: 700;
+}
+
+.discover-shell .text-slate-900 {
+    color: var(--vg-sage) !important;
+}
+
+.discover-shell .text-slate-600 {
+    color: #C5D5C5 !important;
+}
+
+.discover-shell .text-slate-500 {
+    color: #A7BCA9 !important;
+}
+
+.discover-shell .text-slate-400 {
+    color: var(--vg-muted) !important;
+}
+
+/* RATINGS */
+.discover-shell .star-row {
+    letter-spacing: 1.5px;
+    color: #D8F77B !important;
+}
+
+/* CONNECTOR BADGES */
+.discover-shell .bg-blue-50 {
+    background-color: rgba(59,143,123,.15) !important;
+}
+
+.discover-shell .text-blue-600 {
+    color: #9BCFB8 !important;
+}
+
+.discover-shell .border-blue-100 {
+    border-color: rgba(59,143,123,.38) !important;
+}
+
+/* AVAILABILITY BADGES */
+.discover-shell .bg-emerald-50 {
+    background-color: rgba(167,244,50,.10) !important;
+}
+
+.discover-shell .text-emerald-600 {
+    color: var(--vg-lime) !important;
+}
+
+.discover-shell .border-emerald-200 {
+    border-color: rgba(167,244,50,.32) !important;
+}
+
+/* STATION PRICE */
+.discover-shell span.text-sm.font-semibold {
+    color: var(--vg-lime);
+}
+
+/* FAVORITE STAR */
+.discover-shell button.text-lg {
+    padding: 4px;
+}
+
+.discover-shell button.text-amber-400 {
+    color: var(--vg-lime) !important;
+}
+
+/* RESERVE SLOT */
+.discover-shell button.bg-blue-50 {
+    background: linear-gradient(
+        100deg,
+        rgba(167,244,50,.10),
+        rgba(59,143,123,.16)
+    ) !important;
+    color: var(--vg-lime) !important;
+    border: 1px solid rgba(167,244,50,.32) !important;
+    border-radius: 9px !important;
+    font-weight: 700;
+}
+
+.discover-shell button.bg-blue-50:hover {
+    background: linear-gradient(
+        100deg,
+        var(--vg-lime),
+        #D0FF83
+    ) !important;
+    color: #0F1F16 !important;
+    border-color: transparent !important;
+    box-shadow: 0 5px 18px rgba(167,244,50,.18);
+}
+
+/* =====================================================
+   MAP — KEEP NORMAL MAP COLORS FOR MAXIMUM VISIBILITY
+   ===================================================== */
+
+#map {
+    height: 100%;
+    width: 100%;
+    min-height: 320px;
+    z-index: 0;
+    background: #EAF3E7;
+}
+
+/* Do not tint or darken the actual map tiles */
+#map .leaflet-tile {
+    filter: none !important;
+    opacity: 1 !important;
+}
+
+/* Map controls */
+#map .leaflet-control-zoom a {
+    color: var(--vg-lime);
+    background: var(--vg-panel);
+    border-color: #355642;
+}
+
+#map .leaflet-control-zoom a:hover {
+    color: #0F1F16;
+    background: var(--vg-lime);
+}
+
+/* Attribution */
+#map .leaflet-control-attribution {
+    color: #C5D5C5;
+    background: rgba(15,31,22,.92);
+}
+
+#map .leaflet-control-attribution a {
+    color: var(--vg-lime);
+}
+
+/* MAP POPUPS */
+.leaflet-popup-content-wrapper,
+.leaflet-popup-tip {
+    background: #13251A;
+    color: var(--vg-sage);
+}
+
+.leaflet-popup-content-wrapper {
+    border: 1px solid rgba(59,143,123,.6);
+    border-radius: 14px;
+    box-shadow: 0 12px 35px rgba(0,0,0,.35);
+}
+
+.leaflet-popup-content {
+    margin: 14px;
+}
+
+/* CURRENT LOCATION BUTTON */
+.discover-shell button.absolute {
+    border: 1px solid rgba(167,244,50,.45);
+    background: #13251A !important;
+    color: var(--vg-lime) !important;
+}
+
+.discover-shell button.absolute:hover {
+    background: var(--vg-lime) !important;
+    color: #0F1F16 !important;
+}
+
+/* RESERVATION MODAL BACKDROP */
+.discover-shell .fixed.inset-0 {
+    background: rgba(5,13,8,.82) !important;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+
+/* RESERVATION MODAL CARD */
+.discover-shell .fixed.inset-0 > div {
+    color: var(--vg-sage);
+    background: #13251A !important;
+    border: 1px solid rgba(59,143,123,.58) !important;
+    border-radius: 20px !important;
+    box-shadow:
+        0 25px 80px rgba(0,0,0,.55),
+        0 0 35px rgba(167,244,50,.05);
+    scrollbar-width: thin;
+    scrollbar-color: var(--vg-teal) var(--vg-panel);
+}
+
+.discover-shell .fixed.inset-0 > div::-webkit-scrollbar {
+    width: 6px;
+}
+
+.discover-shell .fixed.inset-0 > div::-webkit-scrollbar-track {
+    background: var(--vg-panel);
+}
+
+.discover-shell .fixed.inset-0 > div::-webkit-scrollbar-thumb {
+    background: var(--vg-teal);
+    border-radius: 10px;
+}
+
+.discover-shell .fixed.inset-0 h2 {
+    color: var(--vg-sage) !important;
+}
+
+.discover-shell .fixed.inset-0 label {
+    color: #C1D2C1 !important;
+}
+
+.discover-shell .fixed.inset-0 p {
+    color: #A7BCA9;
+}
+
+/* TOTAL PAYABLE */
+.discover-shell .fixed.inset-0 .bg-emerald-50 {
+    background: rgba(167,244,50,.08) !important;
+    border-color: rgba(167,244,50,.28) !important;
+}
+
+.discover-shell .fixed.inset-0 .text-emerald-600 {
+    color: var(--vg-lime) !important;
+}
+
+/* PAYMENT FILE INPUT */
+.discover-shell input[type="file"] {
+    padding: 9px;
+}
+
+.discover-shell input[type="file"]::file-selector-button {
+    margin-right: 10px;
+    padding: 7px 12px;
+    color: #0F1F16;
+    background: var(--vg-lime);
+    border: 0;
+    border-radius: 7px;
+    cursor: pointer;
+}
+
+/* SUBMIT RESERVATION */
+.discover-shell .fixed.inset-0 button[type="submit"] {
+    color: #0F1F16 !important;
+    background: linear-gradient(110deg, #A7F432, #D0FF83) !important;
+    border: 0 !important;
+    border-radius: 11px !important;
+    box-shadow: 0 7px 22px rgba(167,244,50,.14);
+    font-weight: 800;
+}
+
+.discover-shell .fixed.inset-0 button[type="submit"]:hover {
+    filter: brightness(1.06);
+    transform: translateY(-1px);
+}
+
+.discover-shell button:focus-visible {
+    outline: 2px solid var(--vg-lime);
+    outline-offset: 3px;
+}
+
+/* RESPONSIVE */
+@media (max-width: 639px) {
+    .discover-shell {
+        height: auto;
+        min-height: calc(100vh - 64px);
+        overflow: visible;
+    }
+
+    .discover-shell > div:first-child {
+        height: 55vh;
+        min-height: 350px;
+    }
+
+    .discover-shell > div:last-of-type {
+        height: 45vh;
+        min-height: 320px;
+    }
+
+    #map {
+        height: 45vh;
+        min-height: 320px;
+    }
+
+    .discover-shell .fixed.inset-0 > div {
+        padding: 18px !important;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .discover-shell *,
+    .discover-shell *::before,
+    .discover-shell *::after {
+        transition-duration: .01ms !important;
+        animation-duration: .01ms !important;
+    }
+}
+
+
+/* ==========================================
+   FIX WHITE LEFT SIDEBAR — VOLTGRID THEME
+   ========================================== */
+
+/* Force the complete discover page to use dark theme */
+.discover-shell {
+    background: #0F1F16 !important;
+    color: #EAF3E7 !important;
+}
+
+/* Left sidebar background */
+.discover-shell > div:first-child {
+    background: #0F1F16 !important;
+    color: #EAF3E7 !important;
+    border-right: 1px solid rgba(59, 143, 123, 0.4) !important;
+}
+
+/* Header and search/filter sections */
+.discover-shell > div:first-child > div {
+    background-color: transparent !important;
+    border-color: rgba(59, 143, 123, 0.25) !important;
+}
+
+/* Override Tailwind white and light-gray backgrounds */
+.discover-shell .bg-white,
+.discover-shell .bg-slate-50,
+.discover-shell .bg-slate-100 {
+    background-color: #13251A !important;
+}
+
+/* Search fields */
+.discover-shell input[type="text"],
+.discover-shell input[type="number"],
+.discover-shell input[type="date"],
+.discover-shell input[type="file"],
+.discover-shell select {
+    background: #11251A !important;
+    color: #EAF3E7 !important;
+    border-color: #355642 !important;
+}
+
+/* Station cards and separators */
+.discover-shell .flex-1.overflow-y-auto > div {
+    background-color: transparent !important;
+    border-color: rgba(59, 143, 123, 0.25) !important;
+}
+
+/* Sidebar scrollbar */
+.discover-shell .flex-1.overflow-y-auto {
+    scrollbar-width: thin !important;
+    scrollbar-color: #A7F432 #13251A !important;
+}
+
+.discover-shell .flex-1.overflow-y-auto::-webkit-scrollbar {
+    width: 7px;
+}
+
+.discover-shell .flex-1.overflow-y-auto::-webkit-scrollbar-track {
+    background: #13251A;
+}
+
+.discover-shell .flex-1.overflow-y-auto::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, #A7F432, #3B8F7B);
+    border-radius: 10px;
+}
+
+/* Prevent text from remaining dark */
+.discover-shell .text-slate-900 {
+    color: #EAF3E7 !important;
+}
+
+.discover-shell .text-slate-600 {
+    color: #C5D5C5 !important;
+}
+
+.discover-shell .text-slate-500,
+.discover-shell .text-slate-400 {
+    color: #A7BCA9 !important;
+}
+
+/* Station hover */
+.discover-shell .flex-1.overflow-y-auto > div:hover {
+    background: rgba(59, 143, 123, 0.12) !important;
+}
+
+/* Keep lime-green action buttons */
+.discover-shell button.bg-blue-600,
+.discover-shell button.bg-amber-400 {
+    background: #A7F432 !important;
+    color: #0F1F16 !important;
+    border-color: transparent !important;
+}
+
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="discover-shell flex flex-col sm:flex-row"
+     x-data="discoverApp()" x-init="init()">
+
+  <!-- LEFT PANEL: SEARCH, FILTERS AND STATIONS -->
+  <div class="w-full sm:w-[380px] sm:flex-shrink-0 flex flex-col border-r border-slate-200 bg-white h-1/2 sm:h-full">
+
+    <div class="px-5 py-4 border-b border-slate-100">
+      <h1 class="text-lg font-bold text-slate-900">Charging Stations</h1>
+      <p class="text-xs text-slate-500 mt-0.5">
+        Search station name or location
+      </p>
+    </div>
+
+    <!-- Search -->
+    <div class="px-5 py-3 border-b border-slate-100 space-y-2.5">
+      <div class="relative">
+        <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+
+        <input type="text" x-model="searchQuery"
+          class="w-full rounded-lg bg-slate-50 border border-slate-200 pl-9 pr-4 py-2.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500"
+          placeholder="Search station name or location">
+      </div>
+
+      <!-- Filter chips -->
+      <div class="flex flex-wrap gap-2">
+        <button type="button"
+          @click="activePlugFilter = null; refreshStations()"
+          class="px-3 py-1.5 rounded-full text-xs font-medium border transition"
+          :class="activePlugFilter === null ? 'bg-blue-600 text-white border-blue-600' : 'border-slate-200 text-slate-600 hover:border-blue-300'">
+          All Connectors
+        </button>
+
+        <template x-for="pt in plugTypes" :key="pt">
+          <button type="button"
+            @click="activePlugFilter = (activePlugFilter === pt ? null : pt); refreshStations()"
+            class="px-3 py-1.5 rounded-full text-xs font-medium border transition"
+            :class="activePlugFilter === pt ? 'bg-blue-600 text-white border-blue-600' : 'border-slate-200 text-slate-600 hover:border-blue-300'"
+            x-text="pt"></button>
+        </template>
+
+        <button type="button"
+          @click="favoritesOnly = !favoritesOnly; refreshStations()"
+          class="px-3 py-1.5 rounded-full text-xs font-medium border transition flex items-center gap-1"
+          :class="favoritesOnly ? 'bg-amber-400 text-white border-amber-400' : 'border-slate-200 text-slate-600 hover:border-amber-300'">
+          <i class="fa-solid fa-star text-[10px]"></i> Favorites
+        </button>
+      </div>
+    </div>
+
+    <!-- Station list -->
+    <div class="flex-1 overflow-y-auto">
+      <template x-if="!loading && filteredStations.length === 0">
+        <div class="p-8 text-center text-slate-400 text-sm">
+          <i class="fa-solid fa-charging-station text-2xl mb-2 block"></i>
+          No stations match your filters.
+        </div>
+      </template>
+
+      <template x-for="s in filteredStations" :key="s.id">
+        <div class="border-b border-slate-100 p-4 hover:bg-slate-50 transition cursor-pointer"
+             @click="focusStation(s)">
+
+          <div class="flex items-start justify-between gap-2">
+            <div class="min-w-0">
+              <h3 class="font-semibold text-slate-900 text-sm truncate"
+                  x-text="s.name"></h3>
+
+              <div class="flex items-center gap-1.5 mt-1">
+                <span class="star-row text-amber-400 text-xs"
+                      x-text="starString(s.avg_rating)"></span>
+
+                <span class="text-[11px] text-slate-400"
+                  x-text="s.avg_rating ? s.avg_rating.toFixed(1) + ' (' + s.review_count + ')' : 'No ratings yet'"></span>
+              </div>
+
+              <span class="inline-block mt-1.5 text-[11px] font-medium px-2 py-0.5 rounded-full bg-blue-50 text-blue-600 border border-blue-100"
+                    x-text="s.plug_type"></span>
+
+              <span class="inline-block mt-1.5 ml-1 text-[11px] font-medium px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-100">
+                Available
+              </span>
+            </div>
+
+            <div class="flex flex-col items-end gap-2 shrink-0">
+              <button type="button"
+                @click.stop="toggleFavorite(s)"
+                class="text-lg leading-none"
+                :class="s.is_favorited ? 'text-amber-400' : 'text-slate-300 hover:text-amber-400'">
+                <i class="fa-solid fa-star"></i>
+              </button>
+
+              <span class="text-emerald-600 font-semibold text-sm"
+                    x-text="s.currency_symbol + s.price_per_kwh.toFixed(2)"></span>
+            </div>
+          </div>
+
+          <button type="button"
+            @click.stop="openReserveModal(s)"
+            class="mt-3 w-full py-1.5 rounded-lg bg-blue-50 border border-blue-200 text-blue-600 text-xs font-semibold hover:bg-blue-600 hover:text-white hover:border-blue-600 transition">
+            <i class="fa-solid fa-calendar-plus mr-1"></i>
+            Reserve Slot
+          </button>
+        </div>
+      </template>
+    </div>
+  </div>
+
+  <!-- RIGHT PANEL: MAP -->
+  <div class="relative flex-1 h-1/2 sm:h-full">
+    <div id="map"></div>
+
+    <button type="button" @click="locateMe()"
+      class="absolute bottom-6 right-4 z-[400] w-11 h-11 rounded-full bg-white border border-slate-200 text-blue-600 shadow-lg hover:bg-blue-600 hover:text-white transition flex items-center justify-center">
+      <i class="fa-solid fa-location-crosshairs"></i>
+    </button>
+  </div>
+
+  <!-- RESERVATION MODAL -->
+  <div x-show="showModal" x-cloak
+       class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm"
+       x-transition.opacity>
+
+    <div @click.outside="showModal = false"
+      class="w-full max-w-lg rounded-2xl border border-slate-200 bg-white shadow-2xl p-6 max-h-[90vh] overflow-y-auto">
+
+      <div class="flex items-center justify-between mb-2">
+        <h2 class="text-lg font-bold text-slate-900">
+          <i class="fa-solid fa-bolt text-blue-600 mr-2"></i>
+          Reserve — <span x-text="selectedStationName"></span>
+        </h2>
+
+        <button type="button" @click="showModal = false"
+                class="text-slate-400 hover:text-slate-600">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <div class="flex items-center gap-1.5 mb-5">
+        <span class="star-row text-amber-400 text-xs"
+              x-text="starString(selectedStationRating)"></span>
+
+        <span class="text-[11px] text-slate-400"
+          x-text="selectedStationRating ? selectedStationRating.toFixed(1) + ' (' + selectedStationReviewCount + ' reviews)' : 'No ratings yet'"></span>
+      </div>
+
+      <form method="POST"
+            action="{{ url_for('request_booking') }}"
+            class="space-y-4">
+
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="station_id" :value="selectedStationId">
+
+        <div>
+          <label class="block text-xs font-medium text-slate-500 mb-1.5">
+            Reservation Date
+          </label>
+
+          <input type="date" name="booking_date"
+            x-model="bookingDate" :min="todayStr" required
+            @change="refreshTakenSlots()"
+            class="w-full rounded-lg bg-white border border-slate-200 px-4 py-2.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500">
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium text-slate-500 mb-1.5">
+            Time Slot
+            <span x-show="loadingSlots" class="text-slate-400">
+              <i class="fa-solid fa-spinner fa-spin ml-1"></i>
+            </span>
+          </label>
+
+          <select name="time_slot" x-model="timeSlot" required
+            class="w-full rounded-lg bg-white border border-slate-200 px-4 py-2.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500">
+            <option value="">Select a slot</option>
+
+            <template x-for="slot in allSlots" :key="slot">
+              <option :value="slot"
+                :disabled="takenSlots.includes(slot)"
+                x-text="takenSlots.includes(slot) ? slot + ' (Already Reserved)' : slot"></option>
+            </template>
+          </select>
+
+          <p class="text-[11px] text-slate-400 mt-1">
+            Slots already reserved by another driver on this date are locked and can't be selected.
+          </p>
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium text-slate-500 mb-1.5">
+            Estimated Energy (kWh)
+          </label>
+
+          <input type="number" step="0.1" min="0.1"
+            x-model.number="kwh" @input="computeAmount()" required
+            class="w-full rounded-lg bg-white border border-slate-200 px-4 py-2.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500"
+            placeholder="e.g. 12.5">
+        </div>
+
+        <div class="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 flex items-center justify-between">
+          <span class="text-xs font-medium text-slate-500">Total Payable</span>
+          <span class="font-bold text-emerald-600 text-lg"
+                x-text="selectedCurrencySymbol + amount.toFixed(2)"></span>
+        </div>
+
+        <input type="hidden" name="amount_paid" :value="amount.toFixed(2)">
+        <input type="hidden" name="energy_kwh" :value="Number(kwh || 0).toFixed(2)">
+
+        <div class="rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800">
+          <i class="fa-solid fa-circle-info mr-1"></i>
+          Send the booking request first. You can submit your UPI/UTR transaction ID and payment screenshot after the station owner accepts it.
+        </div>
+
+        <button type="submit"
+          class="w-full py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm transition shadow-sm">
+          <i class="fa-solid fa-calendar-check mr-1.5"></i>
+          Request Charging Slot
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function discoverApp() {
+  return {
+    plugTypes: {{ plug_types|tojson }},
+    allStations: [],
+    filteredStations: [],
+    searchQuery: '',
+    activePlugFilter: null,
+    favoritesOnly: false,
+    loading: true,
+
+    map: null,
+    markers: {},
+
+    // Reservation modal state
+    showModal: false,
+    selectedStationId: null,
+    selectedStationName: '',
+    selectedStationRating: null,
+    selectedStationReviewCount: 0,
+    pricePerKwh: 0,
+    selectedCurrencySymbol: '\u20b9',
+    kwh: null,
+    amount: 0,
+    bookingDate: '',
+    timeSlot: '',
+
+    allSlots: [
+      '08:00 - 09:00',
+      '09:00 - 10:00',
+      '12:00 - 13:00',
+      '15:00 - 16:00',
+      '18:00 - 19:00',
+      '20:00 - 21:00'
+    ],
+
+    takenSlots: [],
+    loadingSlots: false,
+    todayStr: new Date().toISOString().split('T')[0],
+
+    init() {
+      this.map = L.map('map', {
+        zoomControl: true
+      }).setView([20.5937, 78.9629], 5);
+
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors',
+        maxZoom: 19
+      }).addTo(this.map);
+
+      /*
+       * Fix map dimensions after the layout is rendered.
+       * Helps prevent tiles appearing only in the center.
+       */
+      setTimeout(() => {
+        this.map.invalidateSize(true);
+      }, 200);
+
+      window.addEventListener('resize', () => {
+        if (this.map) {
+          this.map.invalidateSize();
+        }
+      });
+
+      this.$watch('searchQuery', () => this.applyClientFilter());
+
+      this.refreshStations();
+    },
+
+    starString(avgRating) {
+      if (!avgRating) return '☆☆☆☆☆';
+
+      const filled = Math.round(avgRating);
+
+      return '★'.repeat(filled) + '☆'.repeat(5 - filled);
+    },
+
+    async refreshStations() {
+      this.loading = true;
+
+      const params = new URLSearchParams();
+
+      if (this.activePlugFilter) {
+        params.set('plug_type', this.activePlugFilter);
+      }
+
+      if (this.favoritesOnly) {
+        params.set('favorites_only', '1');
+      }
+
+      try {
+        const res = await fetch(
+          `{{ url_for('api_stations') }}?${params.toString()}`
+        );
+
+        const data = await res.json();
+
+        this.allStations = Array.isArray(data) ? data : [];
+
+        this.applyClientFilter();
+        this.renderMarkers();
+
+      } catch (err) {
+        console.error('Failed to load stations', err);
+
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    applyClientFilter() {
+      const q = this.searchQuery.trim().toLowerCase();
+
+      this.filteredStations = q
+        ? this.allStations.filter(s =>
+            (s.name || '').toLowerCase().includes(q)
+          )
+        : this.allStations;
+    },
+
+    renderMarkers() {
+      Object.values(this.markers).forEach(marker => {
+        this.map.removeLayer(marker);
+      });
+
+      this.markers = {};
+
+      const bounds = [];
+
+      this.allStations.forEach(s => {
+        const color = s.is_favorited
+          ? '#A7F432'
+          : '#3B8F7B';
+
+        const icon = L.divIcon({
+          className: '',
+          html: `<div style="
+            background:${color};
+            width:16px;
+            height:16px;
+            border-radius:50%;
+            border:2px solid #EAF3E7;
+            box-shadow:0 0 0 5px rgba(167,244,50,.13),
+                       0 3px 12px rgba(0,0,0,.4);
+          "></div>`,
+          iconSize: [16, 16],
+          iconAnchor: [8, 8]
+        });
+
+        const marker = L.marker(
+          [s.latitude, s.longitude],
+          { icon }
+        ).addTo(this.map);
+
+        const stars = this.starString(s.avg_rating);
+
+        marker.bindPopup(`
+          <div style="min-width:180px;font-family:Inter,sans-serif;">
+            <div style="font-weight:800;margin-bottom:5px;color:#EAF3E7;">
+              ${s.name}
+            </div>
+
+            <div style="color:#A7F432;font-size:12px;margin-bottom:5px;">
+              ${stars}
+              <span style="color:#B1C4B3;">
+                ${s.avg_rating ? s.avg_rating.toFixed(1) : 'n/a'}
+              </span>
+            </div>
+
+            <div style="font-size:11px;color:#B1C4B3;margin-bottom:7px;">
+              ${s.plug_type}
+            </div>
+
+            <div style="color:#A7F432;font-weight:800;">
+              ${s.currency_symbol}${s.price_per_kwh.toFixed(2)} / kWh
+            </div>
+          </div>
+        `);
+
+        marker.on('click', () => this.openReserveModal(s));
+
+        this.markers[s.id] = marker;
+
+        bounds.push([s.latitude, s.longitude]);
+      });
+
+      if (bounds.length) {
+        this.map.fitBounds(bounds, {
+          padding: [40, 40],
+          maxZoom: 12
+        });
+      }
+    },
+
+    focusStation(s) {
+      this.map.flyTo(
+        [s.latitude, s.longitude],
+        14
+      );
+
+      if (this.markers[s.id]) {
+        this.markers[s.id].openPopup();
+      }
+    },
+
+    async toggleFavorite(s) {
+      try {
+        const res = await fetch(`/toggle_favorite/${s.id}`, {
+          method: 'POST'
+        });
+
+        const data = await res.json();
+
+        s.is_favorited = !!data.favorited;
+
+        if (this.favoritesOnly && !s.is_favorited) {
+          this.refreshStations();
+        } else {
+          this.renderMarkers();
+        }
+
+      } catch (err) {
+        console.error('Failed to toggle favorite', err);
+      }
+    },
+
+    locateMe() {
+      if (!navigator.geolocation) return;
+
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          this.map.flyTo(
+            [pos.coords.latitude, pos.coords.longitude],
+            13
+          );
+        },
+        (err) => {
+          console.error('Unable to get current location', err);
+        }
+      );
+    },
+
+    openReserveModal(s) {
+      this.selectedStationId = s.id;
+      this.selectedStationName = s.name;
+      this.selectedStationRating = s.avg_rating;
+      this.selectedStationReviewCount = s.review_count;
+      this.pricePerKwh = s.price_per_kwh;
+      this.selectedCurrencySymbol = s.currency_symbol;
+
+      this.kwh = null;
+      this.amount = 0;
+      this.bookingDate = this.todayStr;
+      this.timeSlot = '';
+      this.takenSlots = [];
+
+      this.showModal = true;
+
+      this.refreshTakenSlots();
+    },
+
+    async refreshTakenSlots() {
+      if (!this.selectedStationId || !this.bookingDate) {
+        return;
+      }
+
+      this.loadingSlots = true;
+
+      try {
+        const res = await fetch(
+          `{{ url_for('api_station_slots') }}?station_id=${this.selectedStationId}&booking_date=${this.bookingDate}`
+        );
+
+        const data = await res.json();
+
+        this.takenSlots = data.taken_slots || [];
+
+        if (this.takenSlots.includes(this.timeSlot)) {
+          this.timeSlot = '';
+        }
+
+      } catch (err) {
+        console.error('Failed to load slot availability', err);
+
+      } finally {
+        this.loadingSlots = false;
+      }
+    },
+
+    computeAmount() {
+      const kwhVal = parseFloat(this.kwh) || 0;
+
+      this.amount = kwhVal * this.pricePerKwh;
+    }
+  };
+}
+</script>
+{% endblock %}

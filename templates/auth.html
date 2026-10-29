@@ -1,0 +1,2047 @@
+
+
+{% extends "base.html" %}
+
+{% block title %}Log In or Register — VoltGrid{% endblock %}
+
+
+
+{% block content %}
+
+
+
+<style>
+
+/* ================= VOLTGRID CINEMATIC AUTH PAGE ================= */
+
+
+
+
+
+
+
+.vg-auth {
+
+    --cyan: #12e5f5;
+
+    --blue: #078dff;
+
+    --green: #35efb0;
+
+    --white: #f7fbff;
+
+    --muted: #c3d7f2;
+
+
+
+    min-height: calc(100vh - 64px);
+
+    position: relative;
+
+    isolation: isolate;
+
+    overflow: hidden;
+
+    color: var(--white);
+
+    background: #020a18;
+
+    font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+
+}
+
+
+
+.vg-auth,
+
+.vg-auth \* {
+
+    box-sizing: border-box;
+
+}
+
+
+
+.vg-auth a {
+
+    text-decoration: none;
+
+}
+
+
+
+/* Full-page EV background */
+
+
+
+.vg-auth::before {
+
+    content: "";
+
+    position: absolute;
+
+    inset: 0;
+
+    z-index: -2;
+
+    background:
+
+        url("https\://images.unsplash.com/photo-1593941707882-a5bba14938c7?auto=format&fit=crop&w=2200&q=90")
+
+        center 55% / cover no-repeat;
+
+    transform: scale(1.02);
+
+}
+
+
+
+
+.vg-auth::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+
+    background:
+        linear-gradient(
+            90deg,
+            rgba(15, 31, 22, 0.78) 0%,
+            rgba(15, 31, 22, 0.48) 48%,
+            rgba(15, 31, 22, 0.72) 100%
+        ),
+        linear-gradient(
+            0deg,
+            rgba(15, 31, 22, 0.85) 0%,
+            transparent 55%
+        );
+}
+
+
+
+
+.vg-auth-container {
+
+    width: min(1540px, 100%);
+
+    min-height: calc(100vh - 64px);
+
+    margin: 0 auto;
+
+    padding: 36px clamp(20px, 4vw, 64px) 24px;
+
+    display: grid;
+
+    grid-template-columns: minmax(0, 1.12fr) minmax(400px, .88fr);
+
+    align-items: center;
+
+    gap: clamp(30px, 5vw, 80px);
+
+}
+
+
+
+/* ================= LEFT HERO ================= */
+
+
+
+.vg-hero {
+
+    min-width: 0;
+
+    padding: 16px 0;
+
+}
+
+
+
+.vg-brand {
+
+    display: inline-flex;
+
+    align-items: center;
+
+    gap: 10px;
+
+    color: white !important;
+
+    font-size: 27px;
+
+    font-weight: 900;
+
+    letter-spacing: -1.1px;
+
+    margin-bottom: 45px;
+
+}
+
+
+
+.vg-brand i {
+
+    font-size: 35px;
+
+    color: var(--cyan);
+
+    filter: drop-shadow(0 0 15px rgba(18,229,245,.65));
+
+}
+
+
+
+.vg-brand span span {
+
+    color: var(--cyan);
+
+}
+
+
+
+.vg-eyebrow {
+
+    display: inline-flex;
+
+    align-items: center;
+
+    gap: 9px;
+
+    padding: 9px 14px;
+
+    margin-bottom: 19px;
+
+    border: 1px solid rgba(18,229,245,.6);
+
+    border-radius: 30px;
+
+    background: rgba(2,15,34,.65);
+
+    color: #d6fbff;
+
+    font-size: 11px;
+
+    font-weight: 750;
+
+    backdrop-filter: blur(12px);
+
+}
+
+
+
+.vg-eyebrow i {
+
+    color: var(--cyan);
+
+    font-size: 13px;
+
+}
+
+
+
+.vg-hero h1 {
+
+    max-width: 700px;
+
+    margin: 0 0 20px;
+
+    color: white;
+
+    font-size: clamp(39px, 4.4vw, 65px);
+
+    font-weight: 950;
+
+    line-height: 1.06;
+
+    letter-spacing: -2.5px;
+
+}
+
+
+
+.vg-hero-gradient {
+
+    background: linear-gradient(
+
+        100deg,
+
+        #18f1f3 0%,
+
+        #0cbcff 55%,
+
+        #42efb4 100%
+
+    );
+
+    color: transparent;
+
+    background-clip: text;
+
+    -webkit-background-clip: text;
+
+}
+
+
+
+.vg-hero-description {
+
+    max-width: 520px;
+
+    margin: 0 0 27px;
+
+    color: #d1e0f6;
+
+    font-size: 15px;
+
+    line-height: 1.85;
+
+    text-shadow: 0 2px 12px rgba(0,0,0,.4);
+
+}
+
+
+
+/* Status panel */
+
+
+
+.vg-network {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 11px;
+
+    width: min(100%, 530px);
+
+    padding: 14px 17px;
+
+    border: 1px solid rgba(18,229,245,.28);
+
+    border-radius: 13px;
+
+    background: rgba(2,13,31,.73);
+
+    backdrop-filter: blur(14px);
+
+    color: #d8e9ff;
+
+    font-size: 12px;
+
+}
+
+
+
+.vg-network-dot {
+
+    width: 10px;
+
+    height: 10px;
+
+    flex-shrink: 0;
+
+    border-radius: 50%;
+
+    background: var(--green);
+
+    box-shadow: 0 0 15px var(--green);
+
+}
+
+
+
+.vg-network i {
+
+    margin-left: auto;
+
+    color: var(--cyan);
+
+}
+
+
+
+/* Charging connector cards */
+
+
+
+.vg-connectors {
+
+    display: grid;
+
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+
+    gap: 11px;
+
+    width: min(100%, 700px);
+
+    margin-top: 13px;
+
+}
+
+
+
+.vg-connector {
+
+    min-width: 0;
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 11px;
+
+    padding: 13px 11px;
+
+    border: 1px solid rgba(61,176,255,.38);
+
+    border-radius: 13px;
+
+    background: rgba(3,17,39,.78);
+
+    backdrop-filter: blur(13px);
+
+    transition: .25s ease;
+
+}
+
+
+
+.vg-connector:hover {
+
+    transform: translateY(-3px);
+
+    border-color: var(--cyan);
+
+    background: rgba(5,39,65,.88);
+
+}
+
+
+
+.vg-connector-icon {
+
+    display: grid;
+
+    place-items: center;
+
+    width: 42px;
+
+    height: 42px;
+
+    flex-shrink: 0;
+
+    border: 1px solid rgba(18,229,245,.6);
+
+    border-radius: 50%;
+
+    background: rgba(18,229,245,.11);
+
+    color: var(--cyan);
+
+    font-size: 18px;
+
+    box-shadow: 0 0 17px rgba(18,229,245,.1);
+
+}
+
+
+
+.vg-connector strong {
+
+    display: block;
+
+    color: var(--cyan);
+
+    font-size: 13px;
+
+    margin-bottom: 5px;
+
+}
+
+
+
+.vg-connector small {
+
+    color: #bdd2ef;
+
+    font-size: 10px;
+
+}
+
+
+
+/* ================= RIGHT GLASS AUTH PANEL ================= */
+
+
+
+.vg-auth-card {
+
+    width: 100%;
+
+    max-width: 535px;
+
+    justify-self: end;
+
+    padding: clamp(25px, 3vw, 43px);
+
+    border: 1px solid rgba(18,229,245,.65);
+
+    border-radius: 25px;
+
+    background: linear-gradient(
+
+        145deg,
+
+        rgba(3,18,39,.94),
+
+        rgba(2,10,26,.95)
+
+    );
+
+    box-shadow:
+
+        0 25px 80px rgba(0,0,0,.42),
+
+        0 0 40px rgba(0,200,255,.12),
+
+        inset 0 1px 0 rgba(255,255,255,.04);
+
+    backdrop-filter: blur(24px);
+
+}
+
+
+
+.vg-mobile-brand {
+
+    display: none;
+
+}
+
+
+
+.vg-auth-heading {
+
+    margin: 25px 0 24px;
+
+}
+
+
+
+.vg-auth-heading small {
+
+    color: var(--cyan);
+
+    font-size: 10px;
+
+    font-weight: 850;
+
+    letter-spacing: 2px;
+
+}
+
+
+
+.vg-auth-heading h2 {
+
+    margin: 9px 0 8px;
+
+    font-size: 30px;
+
+    font-weight: 900;
+
+    letter-spacing: -.8px;
+
+    line-height: 1.2;
+
+}
+
+
+
+.vg-auth-heading p {
+
+    margin: 0;
+
+    color: #a9bfdd;
+
+    font-size: 12px;
+
+    line-height: 1.8;
+
+}
+
+
+
+/* Login and Register tabs */
+
+
+
+.vg-tabs {
+
+    display: grid;
+
+    grid-template-columns: 1fr 1fr;
+
+    gap: 9px;
+
+    margin-bottom: 24px;
+
+}
+
+
+
+.vg-tab {
+
+    min-height: 47px;
+
+    border: 1px solid rgba(100,163,218,.35);
+
+    border-radius: 11px;
+
+    background: rgba(7,24,47,.75);
+
+    color: #c5d8f1;
+
+    font-size: 12px;
+
+    font-weight: 800;
+
+    cursor: pointer;
+
+    transition: .2s ease;
+
+}
+
+
+
+.vg-tab:hover {
+
+    border-color: var(--cyan);
+
+}
+
+
+
+.vg-tab.active {
+
+    border-color: transparent;
+
+    background: linear-gradient(110deg, #1be8f1, #09bff0);
+
+    color: #02121f;
+
+    box-shadow: 0 6px 25px rgba(0,204,245,.2);
+
+}
+
+
+
+/* Form */
+
+
+
+.vg-form {
+
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 17px;
+
+}
+
+
+
+.vg-field label,
+
+.vg-label {
+
+    display: block;
+
+    margin-bottom: 8px;
+
+    color: #edf6ff;
+
+    font-size: 12px;
+
+    font-weight: 750;
+
+}
+
+
+
+.vg-input-wrap {
+
+    position: relative;
+
+}
+
+
+
+.vg-input-icon {
+
+    position: absolute;
+
+    top: 50%;
+
+    left: 16px;
+
+    transform: translateY(-50%);
+
+    color: #8bbbe8;
+
+    font-size: 14px;
+
+    pointer-events: none;
+
+}
+
+
+
+.vg-input {
+
+    display: block;
+
+    width: 100%;
+
+    min-height: 49px;
+
+    padding: 13px 15px 13px 45px;
+
+    border: 1px solid rgba(65,115,171,.55);
+
+    border-radius: 12px;
+
+    outline: none;
+
+    background: rgba(8,26,51,.86);
+
+    color: white;
+
+    font: inherit;
+
+    font-size: 12px;
+
+    transition: .2s ease;
+
+}
+
+
+
+.vg-input::placeholder {
+
+    color: #7895b9;
+
+}
+
+
+
+.vg-input:focus {
+
+    border-color: var(--cyan);
+
+    box-shadow: 0 0 0 3px rgba(18,229,245,.1);
+
+    background: rgba(7,29,56,.98);
+
+}
+
+
+
+.vg-submit {
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    gap: 9px;
+
+    min-height: 53px;
+
+    width: 100%;
+
+    margin-top: 2px;
+
+    border: 0;
+
+    border-radius: 12px;
+
+    background: linear-gradient(105deg, #20e9f2, #08bfe9);
+
+    color: #02121e;
+
+    font-size: 13px;
+
+    font-weight: 900;
+
+    cursor: pointer;
+
+    box-shadow: 0 8px 28px rgba(0,201,242,.19);
+
+    transition: .25s ease;
+
+}
+
+
+
+.vg-submit:hover {
+
+    transform: translateY(-2px);
+
+    box-shadow: 0 12px 34px rgba(0,201,242,.32);
+
+}
+
+
+
+.vg-submit.register {
+
+    background: linear-gradient(105deg, #4bf1b7, #20dca0);
+
+}
+
+
+
+.vg-resend {
+
+    text-align: center;
+
+    color: #a7bfdc;
+
+    font-size: 11px;
+
+    line-height: 1.8;
+
+    margin: 0;
+
+}
+
+
+
+.vg-resend a {
+
+    color: var(--cyan);
+
+    font-weight: 800;
+
+}
+
+
+
+.vg-resend a:hover {
+
+    text-decoration: underline;
+
+}
+
+
+
+/* Role cards */
+
+
+
+.vg-role-grid {
+
+    display: grid;
+
+    grid-template-columns: 1fr 1fr;
+
+    gap: 10px;
+
+}
+
+
+
+.vg-role {
+
+    position: relative;
+
+    cursor: pointer;
+
+}
+
+
+
+.vg-role input {
+
+    position: absolute;
+
+    opacity: 0;
+
+    pointer-events: none;
+
+}
+
+
+
+.vg-role-card {
+
+    display: flex;
+
+    flex-direction: column;
+
+    align-items: center;
+
+    justify-content: center;
+
+    gap: 8px;
+
+    min-height: 82px;
+
+    padding: 12px 5px;
+
+    border: 1px solid #29415f;
+
+    border-radius: 12px;
+
+    background: rgba(7,24,47,.8);
+
+    color: #b5c8e0;
+
+    font-size: 11px;
+
+    font-weight: 800;
+
+    transition: .2s ease;
+
+}
+
+
+
+.vg-role-card i {
+
+    color: #82a8d2;
+
+    font-size: 23px;
+
+}
+
+
+
+.vg-role input:checked + .vg-role-card {
+
+    border-color: var(--cyan);
+
+    background: rgba(18,229,245,.09);
+
+    color: #bafaff;
+
+}
+
+
+
+.vg-role input:checked + .vg-role-card i {
+
+    color: var(--cyan);
+
+}
+
+
+
+.vg-role.station input:checked + .vg-role-card {
+
+    border-color: var(--green);
+
+    background: rgba(53,239,176,.08);
+
+    color: #9affd9;
+
+}
+
+
+
+.vg-role.station input:checked + .vg-role-card i {
+
+    color: var(--green);
+
+}
+
+
+
+/* KYC upload */
+
+
+
+.vg-kyc {
+
+    padding: 14px;
+
+    border: 1px solid rgba(255,195,90,.3);
+
+    border-radius: 12px;
+
+    background: rgba(255,195,90,.045);
+
+}
+
+
+
+.vg-kyc label {
+
+    color: #ffda91;
+
+}
+
+
+
+.vg-kyc input[type="file"] {
+
+    width: 100%;
+
+    color: #d8e5f6;
+
+    font-size: 10px;
+
+}
+
+
+
+.vg-kyc input[type="file"]::file-selector-button {
+
+    padding: 8px;
+
+    margin-right: 8px;
+
+    border: 0;
+
+    border-radius: 7px;
+
+    background: rgba(255,195,90,.13);
+
+    color: #ffda91;
+
+    cursor: pointer;
+
+}
+
+
+
+.vg-help {
+
+    color: #94abc9;
+
+    font-size: 10px;
+
+    line-height: 1.7;
+
+    margin: 7px 0 0;
+
+}
+
+
+
+.vg-card-footer {
+
+    display: flex;
+
+    justify-content: center;
+
+    align-items: center;
+
+    gap: 8px;
+
+    margin-top: 24px;
+
+    color: #48caff;
+
+    font-family: ui-monospace, monospace;
+
+    font-size: 10px;
+
+    letter-spacing: .6px;
+
+    text-align: center;
+
+}
+
+
+
+.vg-card-footer i {
+
+    color: var(--cyan);
+
+}
+
+
+
+.vg-auth [x-cloak] {
+
+    display: none !important;
+
+}
+
+
+
+/* ================= RESPONSIVE ================= */
+
+
+
+@media (max-width: 1000px) {
+
+    .vg-auth-container {
+
+        grid-template-columns: minmax(0, 1fr) minmax(360px, .9fr);
+
+        gap: 25px;
+
+        padding: 30px 22px;
+
+    }
+
+
+
+    .vg-hero h1 {
+
+        font-size: clamp(37px, 4.5vw, 52px);
+
+        letter-spacing: -1.8px;
+
+    }
+
+
+
+    .vg-connector {
+
+        flex-direction: column;
+
+        align-items: flex-start;
+
+    }
+
+
+
+    .vg-auth-card {
+
+        padding: 27px;
+
+    }
+
+}
+
+
+
+@media (max-width: 760px) {
+
+    .vg-auth-container {
+
+        min-height: auto;
+
+        grid-template-columns: 1fr;
+
+        gap: 28px;
+
+        padding: 25px 16px 35px;
+
+    }
+
+
+
+    .vg-hero {
+
+        padding: 8px 2px;
+
+    }
+
+
+
+    .vg-brand {
+
+        margin-bottom: 25px;
+
+        font-size: 23px;
+
+    }
+
+
+
+    .vg-brand i {
+
+        font-size: 29px;
+
+    }
+
+
+
+    .vg-hero h1 {
+
+        font-size: clamp(36px, 8vw, 52px);
+
+    }
+
+
+
+    .vg-hero-description {
+
+        font-size: 13px;
+
+    }
+
+
+
+    .vg-auth-card {
+
+        justify-self: center;
+
+        max-width: 540px;
+
+        padding: 25px clamp(18px, 5vw, 32px);
+
+    }
+
+
+
+    .vg-mobile-brand {
+
+        display: inline-flex;
+
+        margin-bottom: 5px;
+
+    }
+
+
+
+    .vg-auth-heading {
+
+        margin-top: 15px;
+
+    }
+
+
+
+    .vg-connectors {
+
+        max-width: 560px;
+
+    }
+
+
+
+    .vg-connector {
+
+        flex-direction: row;
+
+        align-items: center;
+
+    }
+
+}
+
+
+
+@media (max-width: 420px) {
+
+    .vg-auth-container {
+
+        padding: 19px 12px 28px;
+
+    }
+
+
+
+    .vg-hero h1 {
+
+        font-size: 35px;
+
+    }
+
+
+
+    .vg-connectors {
+
+        gap: 6px;
+
+    }
+
+
+
+    .vg-connector {
+
+        padding: 10px 7px;
+
+        gap: 6px;
+
+    }
+
+
+
+    .vg-connector-icon {
+
+        width: 34px;
+
+        height: 34px;
+
+        font-size: 14px;
+
+    }
+
+
+
+    .vg-connector strong {
+
+        font-size: 11px;
+
+    }
+
+
+
+    .vg-connector small {
+
+        font-size: 9px;
+
+    }
+
+
+
+    .vg-auth-card {
+
+        padding: 21px 16px;
+
+    }
+
+}
+
+</style>
+
+
+
+
+<style>
+/* VoltGrid forest + lime auth theme — styling only; form actions and endpoints stay unchanged */
+.vg-auth {
+  --lime: #A7F432;
+  --forest: #0F1F16;
+  --sage: #EAF3E7;
+  --teal: #3B8F7B;
+  --cyan: #A7F432;
+  --blue: #3B8F7B;
+  --green: #A7F432;
+  --white: #EAF3E7;
+  --muted: #B8CBB9;
+  color: var(--sage);
+  background: var(--forest);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+.vg-auth::before {
+  background: url("{{ url_for('static', filename='images/voltgrid-auth-hero.png') }}") center 55% / cover no-repeat;
+  transform: scale(1.02);
+}
+.vg-auth::after {
+  background:
+    linear-gradient(90deg, rgba(15,31,22,.82) 0%, rgba(15,31,22,.62) 46%, rgba(15,31,22,.78) 100%),
+    linear-gradient(0deg, rgba(8,19,12,.96) 0%, transparent 48%, rgba(8,19,12,.22) 100%),
+    radial-gradient(ellipse at 48% 45%, rgba(59,143,123,.19), transparent 54%);
+}
+.vg-brand { color: var(--sage) !important; }
+.vg-brand i { color: var(--lime); filter: drop-shadow(0 0 15px rgba(167,244,50,.4)); }
+.vg-brand span span { color: var(--lime); }
+.vg-eyebrow { border-color: rgba(167,244,50,.52); background: rgba(15,31,22,.72); color: var(--sage); }
+.vg-eyebrow i { color: var(--lime); }
+.vg-hero-gradient {
+  background: linear-gradient(100deg, #A7F432 0%, #D4FF83 50%, #3B8F7B 100%);
+  color: transparent; background-clip: text; -webkit-background-clip: text;
+}
+.vg-hero-description { color: #D5E3D3; }
+.vg-network { border-color: rgba(59,143,123,.55); background: rgba(15,31,22,.78); color: var(--sage); }
+.vg-network-dot { background: var(--lime); box-shadow: 0 0 15px rgba(167,244,50,.65); }
+.vg-network i { color: var(--lime); }
+.vg-connector { border-color: rgba(59,143,123,.5); background: rgba(15,31,22,.78); }
+.vg-connector:hover { border-color: var(--lime); background: rgba(23,43,32,.92); }
+.vg-connector-icon { border-color: rgba(167,244,50,.55); background: rgba(167,244,50,.09); color: var(--lime); box-shadow: 0 0 17px rgba(167,244,50,.08); }
+.vg-connector strong { color: var(--lime); }
+.vg-connector small { color: #C3D4C3; }
+.vg-auth-card {
+  border-color: rgba(59,143,123,.82);
+  border-radius: 25px;
+  background: linear-gradient(145deg, rgba(15,31,22,.96), rgba(10,24,16,.97));
+  box-shadow: 0 25px 80px rgba(0,0,0,.42), 0 0 38px rgba(59,143,123,.13), inset 0 1px 0 rgba(234,243,231,.05);
+}
+.vg-auth-heading small { color: var(--lime); }
+.vg-auth-heading p { color: #B8CBB9; }
+.vg-tab { border-color: rgba(59,143,123,.5); background: rgba(23,43,32,.75); color: #D2E0D1; }
+.vg-tab:hover { border-color: var(--lime); }
+.vg-tab.active { background: linear-gradient(110deg, #A7F432, #D4FF83); color: #0F1F16; box-shadow: 0 6px 25px rgba(167,244,50,.18); }
+.vg-field label, .vg-label { color: var(--sage); }
+.vg-input-icon { color: #8BB89B; }
+.vg-input { border-color: rgba(59,143,123,.58); background: rgba(23,43,32,.74); color: #EAF3E7; }
+.vg-input::placeholder { color: #94AB99; }
+.vg-input:focus { border-color: var(--lime); box-shadow: 0 0 0 3px rgba(167,244,50,.12); background: rgba(23,43,32,.96); }
+.vg-submit, .vg-submit.register {
+  background: linear-gradient(105deg, #A7F432, #D4FF83);
+  color: #0F1F16;
+  box-shadow: 0 8px 28px rgba(167,244,50,.16);
+}
+.vg-submit:hover { box-shadow: 0 12px 34px rgba(167,244,50,.28); }
+.vg-resend { color: #B8CBB9; }
+.vg-resend a { color: var(--lime); }
+.vg-role-card { border-color: rgba(59,143,123,.48); background: rgba(23,43,32,.72); color: #C5D8C5; }
+.vg-role-card i { color: #8EBBA0; }
+.vg-role input:checked + .vg-role-card,
+.vg-role.station input:checked + .vg-role-card { border-color: var(--lime); background: rgba(167,244,50,.09); color: var(--sage); }
+.vg-role input:checked + .vg-role-card i,
+.vg-role.station input:checked + .vg-role-card i { color: var(--lime); }
+.vg-kyc { border-color: rgba(167,244,50,.28); background: rgba(167,244,50,.045); }
+.vg-kyc label { color: #D4FF83; }
+.vg-kyc input[type="file"] { color: #D5E3D3; }
+.vg-kyc input[type="file"]::file-selector-button { background: rgba(167,244,50,.13); color: #D4FF83; }
+.vg-help { color: #A8BBAA; }
+.vg-card-footer { color: #B8CBB9; font-family: Inter, ui-sans-serif, system-ui, sans-serif; letter-spacing: .5px; }
+.vg-card-footer i { color: var(--lime); }
+@media (max-width: 760px) {
+  .vg-auth::after {
+    background: linear-gradient(180deg, rgba(15,31,22,.70), rgba(15,31,22,.90) 55%, #0F1F16 100%);
+  
+  
+  .vg-auth::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -2;
+
+    background-image: url("{{ url_for('static', filename='images/voltgrid-auth-hero.png') }}");
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+
+    transform: scale(1.02);
+}}
+}
+</style>
+
+<div class="vg-auth" x-data="{ tab: 'login', role: 'vehicle_owner' }">
+
+
+
+    <main class="vg-auth-container">
+
+
+
+        <!-- LEFT: EV LANDSCAPE AND BRANDING -->
+
+
+
+        <section class="vg-hero">
+
+
+
+            <a href="{{ url_for('index') }}" class="vg-brand">
+
+                <i class="fa-solid fa-bolt"></i>
+
+                <span>Volt<span>Grid</span></span>
+
+            </a>
+
+
+
+            <div class="vg-eyebrow">
+
+                <i class="fa-solid fa-circle"></i>
+
+                FREE & OPEN-SOURCE MAPPING
+
+            </div>
+
+
+
+            <h1>
+
+                Find a charger.<br>
+
+                <span class="vg-hero-gradient">Reserve your slot.</span><br>
+
+                Charge smarter.
+
+            </h1>
+
+
+
+            <p class="vg-hero-description">
+
+                Discover charging stations, plan range-aware journeys,
+
+                and reserve your charging slot with confidence.
+
+                Your next electric journey starts here.
+
+            </p>
+
+
+
+            <div class="vg-network">
+
+                <span class="vg-network-dot"></span>
+
+                <span>Designed for smarter electric mobility</span>
+
+                <i class="fa-solid fa-bolt"></i>
+
+            </div>
+
+
+
+            <div class="vg-connectors">
+
+
+
+                <div class="vg-connector">
+
+                    <div class="vg-connector-icon">
+
+                        <i class="fa-solid fa-charging-station"></i>
+
+                    </div>
+
+                    <div>
+
+                        <strong>CCS2</strong>
+
+                        <small>Fast DC</small>
+
+                    </div>
+
+                </div>
+
+
+
+                <div class="vg-connector">
+
+                    <div class="vg-connector-icon">
+
+                        <i class="fa-solid fa-plug"></i>
+
+                    </div>
+
+                    <div>
+
+                        <strong>Type 2</strong>
+
+                        <small>AC Charging</small>
+
+                    </div>
+
+                </div>
+
+
+
+                <div class="vg-connector">
+
+                    <div class="vg-connector-icon">
+
+                        <i class="fa-solid fa-car-battery"></i>
+
+                    </div>
+
+                    <div>
+
+                        <strong>CHAdeMO</strong>
+
+                        <small>DC Charging</small>
+
+                    </div>
+
+                </div>
+
+
+
+            </div>
+
+        </section>
+
+
+
+        <!-- RIGHT: AUTHENTICATION PANEL -->
+
+
+
+        <section class="vg-auth-card">
+
+
+
+            <a href="{{ url_for('index') }}"
+
+               class="vg-brand vg-mobile-brand">
+
+                <i class="fa-solid fa-bolt"></i>
+
+                <span>Volt<span>Grid</span></span>
+
+            </a>
+
+
+
+            <div class="vg-auth-heading">
+
+                <small>YOUR ELECTRIC JOURNEY STARTS HERE</small>
+
+
+
+                <h2 x-text="tab === 'login'
+
+                    ? 'Welcome back!'
+
+                    : 'Join VoltGrid today'">
+
+                    Welcome back!
+
+                </h2>
+
+
+
+                <p x-text="tab === 'login'
+
+                    ? 'Log in to plan your journey and manage your bookings.'
+
+                    : 'Create your account and make every charge count.'">
+
+                    Log in to plan your journey and manage your bookings.
+
+                </p>
+
+            </div>
+
+
+
+            <!-- LOGIN / REGISTER TABS -->
+
+
+
+            <div class="vg-tabs">
+
+                <button type="button"
+
+                    @click="tab = 'login'"
+
+                    :class="tab === 'login' ? 'active' : ''"
+
+                    :aria-pressed="tab === 'login'"
+
+                    class="vg-tab">
+
+                    <i class="fa-solid fa-right-to-bracket"></i>
+
+                    &nbsp; Log In
+
+                </button>
+
+
+
+                <button type="button"
+
+                    @click="tab = 'register'"
+
+                    :class="tab === 'register' ? 'active' : ''"
+
+                    :aria-pressed="tab === 'register'"
+
+                    class="vg-tab">
+
+                    <i class="fa-solid fa-user-plus"></i>
+
+                    &nbsp; Register
+
+                </button>
+
+            </div>
+
+
+
+            <!-- LOGIN FORM -->
+
+
+
+            <form x-show="tab === 'login'"
+
+                x-cloak
+
+                method="POST"
+
+                action="{{ url_for('login') }}"
+
+                class="vg-form">
+
+
+
+                <input type="hidden"
+
+                    name="csrf_token"
+
+                    value="{{ csrf_token() }}">
+
+
+
+                <div class="vg-field">
+
+                    <label for="vg-identifier">Username or Email</label>
+
+
+
+                    <div class="vg-input-wrap">
+
+                        <i class="fa-solid fa-user vg-input-icon"></i>
+
+
+
+                        <input id="vg-identifier"
+
+                            class="vg-input"
+
+                            type="text"
+
+                            name="identifier"
+
+                            required
+
+                            autocomplete="username"
+
+                            placeholder="Enter your username or email">
+
+                    </div>
+
+                </div>
+
+
+
+                <div class="vg-field">
+
+                    <label for="vg-password">Password</label>
+
+
+
+                    <div class="vg-input-wrap">
+
+                        <i class="fa-solid fa-lock vg-input-icon"></i>
+
+
+
+                        <input id="vg-password"
+
+                            class="vg-input"
+
+                            type="password"
+
+                            name="password"
+
+                            required
+
+                            autocomplete="current-password"
+
+                            placeholder="Enter your password">
+
+                    </div>
+
+                </div>
+
+
+
+                <button type="submit" class="vg-submit">
+
+                    <i class="fa-solid fa-plug-circle-check"></i>
+
+                    Log In to VoltGrid
+
+                    <i class="fa-solid fa-arrow-right"></i>
+
+                </button>
+
+
+
+                <p class="vg-resend">
+
+                    Didn't get a verification email?
+
+                    <a href="{{ url_for('resend_verification_page') }}">
+
+                        Resend it
+
+                    </a>
+
+                </p>
+
+            </form>
+
+
+
+            <!-- REGISTRATION FORM -->
+
+
+
+            <form x-show="tab === 'register'"
+
+                x-cloak
+
+                method="POST"
+
+                action="{{ url_for('register') }}"
+
+                enctype="multipart/form-data"
+
+                class="vg-form">
+
+
+
+                <input type="hidden"
+
+                    name="csrf_token"
+
+                    value="{{ csrf_token() }}">
+
+
+
+                <div class="vg-field">
+
+                    <label for="vg-username">Username</label>
+
+
+
+                    <div class="vg-input-wrap">
+
+                        <i class="fa-solid fa-user vg-input-icon"></i>
+
+
+
+                        <input id="vg-username"
+
+                            class="vg-input"
+
+                            type="text"
+
+                            name="username"
+
+                            required
+
+                            minlength="3"
+
+                            autocomplete="username"
+
+                            placeholder="Choose a username">
+
+                    </div>
+
+                </div>
+
+
+
+                <div class="vg-field">
+
+                    <label for="vg-email">Email Address</label>
+
+
+
+                    <div class="vg-input-wrap">
+
+                        <i class="fa-solid fa-envelope vg-input-icon"></i>
+
+
+
+                        <input id="vg-email"
+
+                            class="vg-input"
+
+                            type="email"
+
+                            name="email"
+
+                            required
+
+                            autocomplete="email"
+
+                            placeholder="you@example.com">
+
+                    </div>
+
+
+
+                    <p class="vg-help">
+
+                        We'll send a verification link before you can log in.
+
+                    </p>
+
+                </div>
+
+
+
+                <div class="vg-field">
+
+                    <label for="vg-register-password">Create Password</label>
+
+
+
+                    <div class="vg-input-wrap">
+
+                        <i class="fa-solid fa-lock vg-input-icon"></i>
+
+
+
+                        <input id="vg-register-password"
+
+                            class="vg-input"
+
+                            type="password"
+
+                            name="password"
+
+                            required
+
+                            minlength="6"
+
+                            autocomplete="new-password"
+
+                            placeholder="At least 6 characters">
+
+                    </div>
+
+                </div>
+
+
+
+                <div class="vg-field">
+
+                    <span class="vg-label">I am a...</span>
+
+
+
+                    <div class="vg-role-grid">
+
+
+
+                        <label class="vg-role">
+
+                            <input type="radio"
+
+                                name="role"
+
+                                value="vehicle_owner"
+
+                                x-model="role"
+
+                                checked>
+
+
+
+                            <span class="vg-role-card">
+
+                                <i class="fa-solid fa-car-side"></i>
+
+                                EV Driver
+
+                            </span>
+
+                        </label>
+
+
+
+                        <label class="vg-role station">
+
+                            <input type="radio"
+
+                                name="role"
+
+                                value="station_owner"
+
+                                x-model="role">
+
+
+
+                            <span class="vg-role-card">
+
+                                <i class="fa-solid fa-charging-station"></i>
+
+                                Station Owner
+
+                            </span>
+
+                        </label>
+
+
+
+                    </div>
+
+                </div>
+
+
+
+                <!-- KYC DOCUMENT -->
+
+
+
+                <div x-show="role === 'station_owner'"
+
+                    x-cloak
+
+                    class="vg-kyc">
+
+
+
+                    <label class="vg-label" for="vg-kyc">
+
+                        <i class="fa-solid fa-id-card"></i>
+
+                        &nbsp; KYC Document
+
+                    </label>
+
+
+
+                    <input id="vg-kyc"
+
+                        type="file"
+
+                        name="kyc_document"
+
+                        accept=".png,.jpg,.jpeg,.webp,.pdf"
+
+                        :required="role === 'station_owner'">
+
+
+
+                    <p class="vg-help">
+
+                        Business proof or government ID. PNG, JPG, WEBP,
+
+                        or PDF. Admin approval is required before adding stations.
+
+                    </p>
+
+                </div>
+
+
+
+                <button type="submit" class="vg-submit register">
+
+                    <i class="fa-solid fa-user-plus"></i>
+
+                    Create VoltGrid Account
+
+                    <i class="fa-solid fa-arrow-right"></i>
+
+                </button>
+
+            </form>
+
+
+
+            <div class="vg-card-footer">
+
+                <i class="fa-solid fa-bolt"></i>
+
+                VOLTGRID · SMART EV CHARGING
+
+            </div>
+
+
+
+        </section>
+
+
+
+    </main>
+
+</div>
+
+
+
+{% endblock %}

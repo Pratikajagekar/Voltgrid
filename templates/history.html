@@ -1,0 +1,932 @@
+
+{% extends "base.html" %}
+{% block title %}Transaction History — VoltGrid{% endblock %}
+
+{% block extra_head %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+<style>
+/* =========================================
+   VOLTGRID TRANSACTION HISTORY
+   ========================================= */
+:root {
+    --vg-bg: #0F1F16;
+    --vg-panel: #13251A;
+    --vg-card: #192F21;
+    --vg-lime: #A7F432;
+    --vg-teal: #3B8F7B;
+    --vg-sage: #EAF3E7;
+    --vg-muted: #A7BCA9;
+    --vg-border: rgba(59,143,123,.35);
+}
+
+[x-cloak] { display: none !important; }
+
+.vg-history,
+.vg-history * {
+    box-sizing: border-box;
+}
+
+.vg-history {
+    position: relative;
+    isolation: isolate;
+    min-height: calc(100vh - 64px);
+    color: var(--vg-sage);
+    font-family: Inter, "Segoe UI", system-ui, sans-serif;
+}
+
+/* CINEMATIC BACKGROUND IMAGE */
+body:has(.vg-history) {
+    background: var(--vg-bg) !important;
+}
+
+.vg-history::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background:
+        linear-gradient(
+            115deg,
+            rgba(5,22,15,.88),
+            rgba(8,30,20,.76) 48%,
+            rgba(5,22,15,.88)
+        ),
+        url("/static/images/voltgrid-vehicles-bg.png")
+        center center / cover no-repeat;
+}
+
+/* HEADER */
+.vg-history .vg-heading {
+    color: var(--vg-sage);
+    font-size: clamp(1.7rem, 3vw, 2.25rem);
+    font-weight: 850;
+    letter-spacing: -.8px;
+}
+
+.vg-history .vg-subtitle {
+    color: var(--vg-muted);
+    line-height: 1.8;
+}
+
+.vg-history .vg-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 15px;
+    padding: 7px 12px;
+    color: #D0FF83;
+    background: rgba(19,53,33,.78);
+    border: 1px solid rgba(167,244,50,.25);
+    border-radius: 30px;
+    font-size: .7rem;
+    font-weight: 800;
+    letter-spacing: 1px;
+}
+
+.vg-history .vg-dot {
+    width: 8px;
+    height: 8px;
+    background: var(--vg-lime);
+    border-radius: 50%;
+    box-shadow: 0 0 12px rgba(167,244,50,.65);
+}
+
+/* GLASS PANELS */
+.vg-history .vg-panel {
+    background: rgba(8,29,19,.87);
+    border: 1px solid var(--vg-border);
+    border-radius: 18px;
+    box-shadow: 0 18px 50px rgba(0,0,0,.28);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+}
+
+.vg-history .vg-spend-card {
+    min-width: 215px;
+    padding: 18px 22px;
+    background: linear-gradient(
+        135deg,
+        rgba(59,143,123,.20),
+        rgba(167,244,50,.06)
+    );
+    border: 1px solid rgba(167,244,50,.28);
+    border-radius: 15px;
+}
+
+.vg-history .vg-spend-label {
+    color: var(--vg-muted);
+    font-size: .7rem;
+    font-weight: 750;
+    letter-spacing: .7px;
+    text-transform: uppercase;
+}
+
+.vg-history .vg-spend-value {
+    margin-top: 7px;
+    color: var(--vg-lime);
+    font-size: 1.7rem;
+    font-weight: 850;
+    overflow-wrap: anywhere;
+}
+
+/* TABLE HEADER */
+.vg-history .vg-ledger {
+    overflow: hidden;
+}
+
+.vg-history .vg-ledger-heading {
+    padding: 20px;
+    border-bottom: 1px solid var(--vg-border);
+}
+
+.vg-history .vg-ledger-title {
+    color: var(--vg-sage);
+    font-weight: 800;
+    font-size: 1rem;
+}
+
+.vg-history .vg-ledger-note {
+    margin-top: 5px;
+    color: var(--vg-muted);
+    font-size: .77rem;
+    line-height: 1.7;
+}
+
+/* HORIZONTAL TABLE SCROLL */
+.vg-history .vg-table-wrap {
+    width: 100%;
+    overflow-x: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--vg-lime) var(--vg-panel);
+}
+
+.vg-history .vg-table-wrap::-webkit-scrollbar {
+    height: 7px;
+}
+
+.vg-history .vg-table-wrap::-webkit-scrollbar-track {
+    background: var(--vg-panel);
+}
+
+.vg-history .vg-table-wrap::-webkit-scrollbar-thumb {
+    background: linear-gradient(90deg,var(--vg-lime),var(--vg-teal));
+    border-radius: 10px;
+}
+
+.vg-history table {
+    width: 100%;
+    min-width: 950px;
+    border-collapse: collapse;
+    text-align: left;
+    font-size: .82rem;
+}
+
+.vg-history thead {
+    background: rgba(19,53,33,.96);
+}
+
+.vg-history thead th {
+    padding: 15px 16px;
+    color: #C0D2C1;
+    border-bottom: 1px solid var(--vg-border);
+    font-size: .68rem;
+    font-weight: 800;
+    letter-spacing: .7px;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.vg-history tbody tr {
+    background: rgba(8,29,19,.38);
+    border-bottom: 1px solid rgba(59,143,123,.19);
+    transition: background .2s;
+}
+
+.vg-history tbody tr:last-child {
+    border-bottom: 0;
+}
+
+.vg-history tbody tr:hover {
+    background: rgba(59,143,123,.15);
+}
+
+.vg-history tbody td {
+    padding: 16px;
+    color: var(--vg-sage);
+    vertical-align: middle;
+}
+
+.vg-history .vg-mono {
+    font-family: "SFMono-Regular", Consolas, monospace;
+    font-size: .75rem;
+}
+
+.vg-history .vg-muted {
+    color: var(--vg-muted);
+}
+
+.vg-history .vg-transaction-id {
+    color: #9ED8C3;
+    overflow-wrap: anywhere;
+}
+
+.vg-history .vg-amount {
+    color: var(--vg-lime);
+    font-weight: 800;
+    white-space: nowrap;
+}
+
+/* STATUS BADGES */
+.vg-history .vg-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 9px;
+    border-radius: 20px;
+    font-size: .68rem;
+    font-weight: 800;
+    white-space: nowrap;
+}
+
+.vg-history .vg-status-approved {
+    color: #C9FF91;
+    background: rgba(167,244,50,.10);
+    border: 1px solid rgba(167,244,50,.27);
+}
+
+.vg-history .vg-status-pending {
+    color: #F7D98A;
+    background: rgba(234,179,8,.09);
+    border: 1px solid rgba(234,179,8,.25);
+}
+
+.vg-history .vg-status-rejected {
+    color: #FFA3A3;
+    background: rgba(239,68,68,.09);
+    border: 1px solid rgba(239,68,68,.25);
+}
+
+.vg-history .vg-status-cancelled {
+    color: #C4D1C6;
+    background: rgba(148,163,184,.09);
+    border: 1px solid rgba(148,163,184,.23);
+}
+
+.vg-history .vg-rejection {
+    max-width: 210px;
+    margin-top: 6px;
+    color: #FFA3A3;
+    font-size: .7rem;
+    overflow-wrap: anywhere;
+}
+
+/* ACTION BUTTONS */
+.vg-history .vg-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 8px 10px;
+    border-radius: 9px;
+    font-size: .74rem;
+    font-weight: 750;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: all .2s;
+}
+
+.vg-history .vg-view-proof {
+    color: #9ED8C3;
+    background: rgba(59,143,123,.10);
+    border: 1px solid rgba(59,143,123,.3);
+}
+
+.vg-history .vg-view-proof:hover {
+    color: #0F1F16;
+    background: var(--vg-lime);
+    border-color: var(--vg-lime);
+}
+
+.vg-history .vg-cancel {
+    color: #FFA3A3;
+    background: rgba(239,68,68,.07);
+    border: 1px solid rgba(239,68,68,.25);
+}
+
+.vg-history .vg-cancel:hover {
+    color: white;
+    background: #D94141;
+}
+
+.vg-history .vg-review {
+    color: var(--vg-lime);
+    background: rgba(167,244,50,.07);
+    border: 1px solid rgba(167,244,50,.25);
+}
+
+.vg-history .vg-review:hover {
+    color: #0F1F16;
+    background: var(--vg-lime);
+}
+
+/* DOWNLOAD PDF */
+.vg-history .vg-pdf-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+    padding: 13px 19px;
+    color: #0F1F16;
+    background: linear-gradient(110deg,#A7F432,#66DC73);
+    border: 0;
+    border-radius: 11px;
+    font-size: .85rem;
+    font-weight: 850;
+    box-shadow: 0 8px 22px rgba(167,244,50,.13);
+    cursor: pointer;
+    transition: transform .2s, box-shadow .2s;
+}
+
+.vg-history .vg-pdf-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 28px rgba(167,244,50,.22);
+}
+
+/* EMPTY STATE */
+.vg-history .vg-empty {
+    padding: 48px 20px;
+    text-align: center;
+}
+
+.vg-history .vg-empty-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 64px;
+    height: 64px;
+    margin: 0 auto 17px;
+    color: var(--vg-lime);
+    background: rgba(167,244,50,.08);
+    border: 1px solid rgba(167,244,50,.24);
+    border-radius: 18px;
+    font-size: 1.6rem;
+}
+
+.vg-history .vg-empty-title {
+    margin-bottom: 8px;
+    color: var(--vg-sage);
+    font-weight: 800;
+}
+
+.vg-history .vg-empty-text {
+    color: var(--vg-muted);
+    font-size: .82rem;
+    line-height: 1.8;
+}
+
+/* REVIEW MODAL */
+.vg-history .vg-modal-backdrop {
+    background: rgba(3,14,8,.86);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+}
+
+.vg-history .vg-modal {
+    width: 100%;
+    max-width: 440px;
+    max-height: 90vh;
+    overflow-y: auto;
+    padding: 25px;
+    color: var(--vg-sage);
+    background: #10291B;
+    border: 1px solid rgba(59,143,123,.55);
+    border-radius: 19px;
+    box-shadow: 0 25px 80px rgba(0,0,0,.55);
+    scrollbar-width: thin;
+    scrollbar-color: var(--vg-lime) var(--vg-panel);
+}
+
+.vg-history .vg-modal textarea {
+    width: 100%;
+    padding: 12px 14px;
+    color: var(--vg-sage) !important;
+    background: #0F1F16 !important;
+    border: 1px solid #355642 !important;
+    border-radius: 11px;
+    resize: vertical;
+}
+
+.vg-history .vg-modal textarea::placeholder {
+    color: #829987;
+}
+
+.vg-history .vg-modal textarea:focus {
+    outline: none;
+    border-color: var(--vg-lime) !important;
+    box-shadow: 0 0 0 3px rgba(167,244,50,.1);
+}
+
+.vg-history .vg-submit-review {
+    width: 100%;
+    padding: 12px;
+    color: #0F1F16;
+    background: linear-gradient(110deg,#A7F432,#66DC73);
+    border: 0;
+    border-radius: 11px;
+    font-weight: 850;
+    cursor: pointer;
+}
+
+.vg-history .vg-submit-review:disabled {
+    opacity: .4;
+    cursor: not-allowed;
+}
+
+.vg-history button:focus-visible,
+.vg-history a:focus-visible {
+    outline: 2px solid var(--vg-lime);
+    outline-offset: 3px;
+}
+
+/* PRINT FALLBACK */
+@media print {
+    nav, footer, .no-print, .vg-history::before {
+        display: none !important;
+    }
+
+    body {
+        background: white !important;
+        color: #111 !important;
+    }
+
+    .vg-history .vg-panel,
+    .vg-history tbody tr,
+    .vg-history thead {
+        background: white !important;
+        box-shadow: none !important;
+        backdrop-filter: none !important;
+    }
+
+    .vg-history table,
+    .vg-history tbody td,
+    .vg-history thead th {
+        color: #111 !important;
+        border-color: #ddd !important;
+    }
+}
+
+/* RESPONSIVE */
+@media(max-width:640px) {
+    .vg-history .vg-spend-card {
+        width: 100%;
+    }
+
+    .vg-history .vg-ledger-heading {
+        padding: 15px;
+    }
+
+    .vg-history .vg-modal {
+        padding: 19px;
+    }
+
+    .vg-history .vg-heading {
+        letter-spacing: -.5px;
+    }
+}
+
+@media(prefers-reduced-motion:reduce) {
+    .vg-history *,
+    .vg-history *::before,
+    .vg-history *::after {
+        transition-duration: .01ms !important;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="vg-history max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8"
+     x-data="historyApp()">
+
+    <!-- PAGE HEADER -->
+    <header class="flex flex-col sm:flex-row sm:items-end justify-between gap-5 mb-7 no-print">
+        <div>
+            <div class="vg-eyebrow">
+                <span class="vg-dot"></span>
+                SECURE PAYMENT LEDGER
+            </div>
+
+            <h1 class="vg-heading">
+                <i class="fa-solid fa-receipt mr-2"
+                   style="color:#A7F432;"></i>
+                My Reservations &amp; History
+            </h1>
+
+            <p class="vg-subtitle text-sm mt-2">
+                Your reservation records, payment verification and charging history.
+            </p>
+        </div>
+
+        <div class="vg-spend-card">
+            <div class="vg-spend-label">
+                <i class="fa-solid fa-shield-halved mr-1"
+                   style="color:#3B8F7B;"></i>
+                Total Verified Spend
+            </div>
+
+            <div class="vg-spend-value">
+                ₹{{ "%.2f"|format(total_spend) }}
+            </div>
+
+            <div class="text-xs mt-2" style="color:#A7BCA9;">
+                <i class="fa-solid fa-lock mr-1"></i>
+                Payment summary
+            </div>
+        </div>
+    </header>
+
+    <!-- TRANSACTION LEDGER -->
+    <section id="ledger" class="vg-panel vg-ledger">
+
+        <div class="vg-ledger-heading flex items-center justify-between gap-3">
+            <div>
+                <h2 class="vg-ledger-title">
+                    <i class="fa-solid fa-list-check mr-2"
+                       style="color:#A7F432;"></i>
+                    Reservation Ledger
+                </h2>
+
+                <p class="vg-ledger-note">
+                    Review bookings, transaction IDs, payment proof and status.
+                </p>
+            </div>
+
+            <span style="display:inline-flex;align-items:center;gap:7px;padding:7px 10px;border-radius:20px;background:rgba(167,244,50,.07);border:1px solid rgba(167,244,50,.22);color:#D0FF83;font-size:.7rem;font-weight:800;white-space:nowrap;">
+                <i class="fa-solid fa-bolt"></i>
+                VOLTGRID
+            </span>
+        </div>
+
+        <div class="vg-table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Reserved For</th>
+                        <th>Station</th>
+                        <th>Slot</th>
+                        <th>Transaction ID</th>
+                        <th>Amount</th>
+                        <th>Status</th>
+                        <th class="no-print">Proof</th>
+                        <th class="no-print">Actions</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for b in bookings %}
+                    <tr>
+                        <td class="vg-mono vg-muted">
+                            {{ b.booking_date.strftime('%d %b %Y') }}
+                        </td>
+
+                        <td>
+                            <div class="font-semibold">
+                                {{ b.station.name }}
+                            </div>
+                        </td>
+
+                        <td class="vg-mono vg-muted">
+                            {{ b.time_slot }}
+                        </td>
+
+                        <td class="vg-mono vg-transaction-id">
+                            {{ b.transaction_id or 'Not paid yet' }}
+                        </td>
+
+                        <td class="vg-mono vg-amount">
+                            ₹{{ "%.2f"|format(b.amount_paid) }}
+                        </td>
+
+                        <td>
+                            {% if b.status == 'Requested' %}
+                            <span class="vg-status vg-status-pending"><i class="fa-solid fa-hourglass-half"></i> Awaiting owner</span>
+                            {% elif b.status == 'Accepted - Awaiting Payment' %}
+                            <span class="vg-status vg-status-approved"><i class="fa-solid fa-check"></i> Accepted — payment due</span>
+                            {% elif b.status == 'Approved' %}
+                            <span class="vg-status vg-status-approved">
+                                <i class="fa-solid fa-circle-check"></i>
+                                Approved
+                            </span>
+                            {% elif b.status == 'Pending Verification' %}
+                            <span class="vg-status vg-status-pending">
+                                <i class="fa-solid fa-clock"></i>
+                                Pending Verification
+                            </span>
+                            {% elif b.status == 'Rejected' %}
+                            <span class="vg-status vg-status-rejected">
+                                <i class="fa-solid fa-circle-xmark"></i>
+                                Rejected
+                            </span>
+                            {% elif b.status == 'Cancelled' %}
+                            <span class="vg-status vg-status-cancelled">
+                                <i class="fa-solid fa-ban"></i>
+                                Cancelled
+                            </span>
+                            {% else %}
+                            <span class="vg-status vg-status-cancelled">
+                                {{ b.status }}
+                            </span>
+                            {% endif %}
+
+                            {% if b.status == 'Rejected' and b.rejection_reason %}
+                            <div class="vg-rejection">
+                                {{ b.rejection_reason }}
+                            </div>
+                            {% endif %}
+                        </td>
+
+                        <td class="no-print">
+                            {% if b.payment_proof %}
+                            <a href="{{ url_for('uploaded_file', filename=b.payment_proof) }}"
+                               target="_blank"
+                               rel="noopener"
+                               class="vg-action vg-view-proof">
+                                <i class="fa-solid fa-image"></i>
+                                View
+                            </a>
+                            {% else %}
+                            <span class="vg-muted">—</span>
+                            {% endif %}
+                        </td>
+
+                        <td class="no-print">
+                            {% if b.status == 'Accepted - Awaiting Payment' %}
+                            <form method="POST" action="{{ url_for('pay_booking', booking_id=b.id) }}" enctype="multipart/form-data" class="min-w-56 space-y-2">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <input type="text" name="transaction_id" required minlength="6" maxlength="64" placeholder="UPI / UTR transaction ID" class="w-full rounded-lg border border-slate-600 bg-slate-900 px-3 py-2 text-xs text-white">
+                                <input type="file" name="payment_proof" accept=".png,.jpg,.jpeg,.webp" required class="w-full text-xs text-slate-300">
+                                <button type="submit" class="vg-action vg-review"><i class="fa-solid fa-upload"></i> Submit Payment</button>
+                            </form>
+                            {% elif b.status == 'Approved' %}
+                            <div class="flex flex-col gap-2">
+                                <a class="vg-action vg-review" href="{{ url_for('booking_invoice', booking_id=b.id) }}" target="_blank"><i class="fa-solid fa-file-invoice"></i> View Invoice</a>
+                                {% set existing = reviewed_stations.get(b.station_id) %}
+                                {% set existing_rating = existing.rating if existing else 0 %}
+                                {% set existing_comment = (existing.comment or '') if existing else '' %}
+                                <button type="button" @click="openReviewModal({{ b.station_id|tojson }}, {{ b.station.name|tojson }}, {{ existing_rating|tojson }}, {{ existing_comment|tojson }})" class="vg-action vg-review"><i class="fa-solid fa-star"></i>{{ 'Edit review' if existing else 'Write review' }}</button>
+                            </div>
+                            {% elif b.status in ['Requested', 'Accepted - Awaiting Payment', 'Pending Verification'] %}
+                            <form method="POST"
+                                  action="{{ url_for('cancel_booking', booking_id=b.id) }}"
+                                  onsubmit="return confirm('Cancel this reservation? The slot will be released for other drivers.');">
+
+                                <input type="hidden"
+                                       name="csrf_token"
+                                       value="{{ csrf_token() }}">
+
+                                <button type="submit" class="vg-action vg-cancel">
+                                    <i class="fa-solid fa-ban"></i>
+                                    Cancel
+                                </button>
+                            </form>
+
+                            {% else %}
+                                <span class="vg-muted">—</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+
+                    {% else %}
+                    <tr>
+                        <td colspan="8">
+                            <div class="vg-empty">
+                                <div class="vg-empty-icon">
+                                    <i class="fa-solid fa-receipt"></i>
+                                </div>
+
+                                <div class="vg-empty-title">
+                                    No reservations yet
+                                </div>
+
+                                <p class="vg-empty-text">
+                                    Your charging reservations and payment records
+                                    will appear here after your first booking.
+                                    Head to Discover to find a charging station.
+                                </p>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- PDF RECEIPT DOWNLOAD -->
+    {% if bookings %}
+    <div class="mt-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 no-print">
+        <p class="text-xs" style="color:#A7BCA9;line-height:1.8;">
+            <i class="fa-solid fa-circle-info mr-1"
+               style="color:#3B8F7B;"></i>
+            Export your reservation ledger for your records.
+        </p>
+
+        <button type="button"
+                onclick="downloadReceipt()"
+                class="vg-pdf-button">
+            <i class="fa-solid fa-file-arrow-down"></i>
+            Download Receipt (PDF)
+        </button>
+    </div>
+    {% endif %}
+
+    <!-- REVIEW MODAL -->
+    <div x-show="showReviewModal"
+         x-cloak
+         x-transition.opacity
+         class="vg-modal-backdrop fixed inset-0 z-50 flex items-center justify-center p-4 no-print">
+
+        <div @click.outside="showReviewModal = false"
+             @keydown.escape.window="showReviewModal = false"
+             class="vg-modal">
+
+            <div class="flex items-center justify-between gap-3 mb-5">
+                <h2 class="text-lg font-extrabold" style="color:#EAF3E7;">
+                    <i class="fa-solid fa-star mr-2"
+                       style="color:#A7F432;"></i>
+                    Rate Station
+                </h2>
+
+                <button type="button"
+                        @click="showReviewModal = false"
+                        class="text-xl"
+                        style="color:#A7BCA9;"
+                        aria-label="Close review">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <p class="text-sm mb-5" style="color:#B1C4B3;">
+                Share your charging experience at
+                <span class="font-bold"
+                      style="color:#A7F432;"
+                      x-text="reviewStationName"></span>.
+            </p>
+
+            <form method="POST"
+                  action="{{ url_for('submit_review') }}"
+                  class="space-y-5">
+
+                <input type="hidden"
+                       name="csrf_token"
+                       value="{{ csrf_token() }}">
+
+                <input type="hidden"
+                       name="station_id"
+                       :value="reviewStationId">
+
+                <input type="hidden"
+                       name="rating"
+                       :value="reviewRating">
+
+                <div>
+                    <label class="block text-xs font-bold mb-3"
+                           style="color:#C5D5C5;">
+                        YOUR RATING
+                    </label>
+
+                    <div class="flex items-center gap-2 text-3xl">
+                        <template x-for="n in [1,2,3,4,5]" :key="n">
+                            <button type="button"
+                                    @click="reviewRating = n"
+                                    :aria-label="'Rate ' + n + ' out of 5 stars'"
+                                    :style="n <= reviewRating
+                                        ? 'color:#A7F432'
+                                        : 'color:#526657'"
+                                    class="transition hover:scale-110">
+                                <i class="fa-solid fa-star"></i>
+                            </button>
+                        </template>
+                    </div>
+
+                    <p class="text-xs mt-2"
+                       style="color:#A7BCA9;"
+                       x-text="reviewRating
+                           ? reviewRating + ' out of 5 stars'
+                           : 'Select a rating'">
+                    </p>
+                </div>
+
+                <div>
+                    <label for="review-comment"
+                           class="block text-xs font-bold mb-2"
+                           style="color:#C5D5C5;">
+                        COMMENT (OPTIONAL)
+                    </label>
+
+                    <textarea id="review-comment"
+                              name="comment"
+                              x-model="reviewComment"
+                              rows="4"
+                              maxlength="500"
+                              placeholder="How was your charging experience?"
+                              class="text-sm"></textarea>
+
+                    <p class="text-xs mt-2 text-right"
+                       style="color:#829987;"
+                       x-text="reviewComment.length + '/500 characters'">
+                    </p>
+                </div>
+
+                <button type="submit"
+                        :disabled="reviewRating === 0"
+                        class="vg-submit-review">
+                    <i class="fa-solid fa-paper-plane mr-2"></i>
+                    Submit Review
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function historyApp() {
+    return {
+        showReviewModal: false,
+        reviewStationId: null,
+        reviewStationName: '',
+        reviewRating: 0,
+        reviewComment: '',
+
+        openReviewModal(stationId, stationName, rating, comment) {
+            this.reviewStationId = stationId;
+            this.reviewStationName = stationName;
+            this.reviewRating = Number(rating) || 0;
+            this.reviewComment = comment || '';
+            this.showReviewModal = true;
+        }
+    };
+}
+
+async function downloadReceipt() {
+    const element = document.getElementById('ledger');
+
+    if (!element) {
+        window.print();
+        return;
+    }
+
+    if (typeof window.html2pdf !== 'function') {
+        window.print();
+        return;
+    }
+
+    const button = document.querySelector('.vg-pdf-button');
+
+    if (button) {
+        button.disabled = true;
+        button.style.opacity = '.65';
+    }
+
+    try {
+        const opt = {
+            margin: 0.35,
+            filename: 'voltgrid_transaction_history.pdf',
+            image: {
+                type: 'jpeg',
+                quality: 0.98
+            },
+            html2canvas: {
+                scale: 2,
+                useCORS: true,
+                backgroundColor: '#0F1F16',
+                scrollX: 0,
+                scrollY: 0
+            },
+            jsPDF: {
+                unit: 'in',
+                format: 'a4',
+                orientation: 'landscape'
+            },
+            pagebreak: {
+                mode: ['css', 'legacy']
+            }
+        };
+
+        await window.html2pdf().set(opt).from(element).save();
+    } catch (error) {
+        console.error('PDF generation failed:', error);
+        window.print();
+    } finally {
+        if (button) {
+            button.disabled = false;
+            button.style.opacity = '1';
+        }
+    }
+}
+</script>
+{% endblock %}

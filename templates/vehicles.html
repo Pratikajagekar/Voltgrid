@@ -1,0 +1,621 @@
+
+{% extends "base.html" %}
+{% block title %}My Vehicles — VoltGrid{% endblock %}
+
+{% block extra_head %}
+<style>
+/* =================================================
+   VOLTGRID MY VEHICLES — PREMIUM EV GARAGE
+   Forest Green | Lime | Sage | Teal
+   ================================================= */
+
+:root {
+    --vg-bg: #0F1F16;
+    --vg-panel: #13251A;
+    --vg-card: #192F21;
+    --vg-lime: #A7F432;
+    --vg-teal: #3B8F7B;
+    --vg-sage: #EAF3E7;
+    --vg-muted: #A7BCA9;
+    --vg-border: rgba(59,143,123,.38);
+}
+
+[x-cloak] { display: none !important; }
+
+.vg-vehicles,
+.vg-vehicles * {
+    box-sizing: border-box;
+}
+
+.vg-vehicles {
+    position: relative;
+    isolation: isolate;
+    min-height: calc(100vh - 64px);
+    color: var(--vg-sage);
+    font-family: Inter, "Segoe UI", system-ui, sans-serif;
+}
+
+/* BACKGROUND IMAGE */
+body:has(.vg-vehicles) {
+    background: var(--vg-bg) !important;
+}
+
+.vg-vehicles::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background:
+        linear-gradient(
+            110deg,
+            rgba(5,22,15,.88),
+            rgba(8,30,20,.72) 48%,
+            rgba(5,22,15,.82)
+        ),
+        url("/static/images/voltgrid-vehicles-bg.png")
+        center / cover no-repeat;
+}
+
+/* PAGE HEADING */
+.vg-vehicles .vg-heading {
+    color: var(--vg-sage);
+    font-size: clamp(1.8rem, 4vw, 2.5rem);
+    font-weight: 850;
+    letter-spacing: -1px;
+}
+
+.vg-vehicles .vg-heading-icon {
+    color: var(--vg-lime);
+}
+
+.vg-vehicles .vg-subtitle {
+    color: var(--vg-muted);
+    line-height: 1.8;
+}
+
+.vg-vehicles .vg-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    padding: 7px 12px;
+    margin-bottom: 16px;
+    border-radius: 30px;
+    color: #D0FF83;
+    background: rgba(19,53,33,.78);
+    border: 1px solid rgba(167,244,50,.25);
+    font-size: .72rem;
+    font-weight: 800;
+    letter-spacing: 1px;
+}
+
+.vg-vehicles .vg-status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--vg-lime);
+    box-shadow: 0 0 12px rgba(167,244,50,.7);
+}
+
+/* GLASS PANELS */
+.vg-vehicles .vg-panel {
+    position: relative;
+    overflow: hidden;
+    padding: 24px;
+    margin-bottom: 20px;
+    border: 1px solid rgba(59,143,123,.48);
+    border-radius: 19px;
+    background: rgba(8,29,19,.86);
+    box-shadow: 0 20px 55px rgba(0,0,0,.28);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+}
+
+.vg-vehicles .vg-panel::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 25px;
+    width: 76px;
+    height: 3px;
+    border-radius: 0 0 8px 8px;
+    background: linear-gradient(90deg,var(--vg-lime),var(--vg-teal));
+}
+
+.vg-vehicles .vg-panel-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 0 0 18px;
+    color: var(--vg-sage);
+    font-size: 1.1rem;
+    font-weight: 800;
+}
+
+.vg-vehicles .vg-title-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 43px;
+    height: 43px;
+    flex-shrink: 0;
+    border-radius: 13px;
+    color: var(--vg-lime);
+    background: rgba(167,244,50,.09);
+    border: 1px solid rgba(167,244,50,.30);
+    font-size: 1.1rem;
+}
+
+.vg-vehicles .vg-section-note {
+    color: var(--vg-muted);
+    font-size: .82rem;
+    line-height: 1.7;
+    margin: -8px 0 22px 55px;
+}
+
+/* FORM LABELS */
+.vg-vehicles .vg-form-label {
+    display: block;
+    margin-bottom: 8px;
+    color: #D5E4D5;
+    font-size: .8rem;
+    font-weight: 700;
+}
+
+.vg-vehicles .vg-form-label i {
+    margin-right: 6px;
+    color: #A8D99B;
+}
+
+/* FORM INPUTS */
+.vg-vehicles .vg-input {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    padding: 13px 14px;
+    color: var(--vg-sage) !important;
+    background: rgba(5,25,16,.92) !important;
+    border: 1px solid #28513A !important;
+    border-radius: 12px !important;
+    font-size: .88rem;
+    transition: border-color .2s, box-shadow .2s;
+}
+
+.vg-vehicles .vg-input::placeholder {
+    color: #829987 !important;
+}
+
+.vg-vehicles .vg-input:focus {
+    outline: none !important;
+    border-color: var(--vg-lime) !important;
+    box-shadow: 0 0 0 3px rgba(167,244,50,.12);
+}
+
+.vg-vehicles select.vg-input option {
+    color: var(--vg-sage);
+    background: var(--vg-panel);
+}
+
+/* SAVE BUTTON */
+.vg-vehicles .vg-save-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+    padding: 14px 18px;
+    color: #0F1F16 !important;
+    background: linear-gradient(110deg,#A7F432,#54D86A,#16B879);
+    border: 0;
+    border-radius: 12px;
+    font-size: .92rem;
+    font-weight: 850;
+    cursor: pointer;
+    box-shadow: 0 8px 25px rgba(55,220,85,.14);
+    transition: transform .2s, box-shadow .2s, filter .2s;
+}
+
+.vg-vehicles .vg-save-button:hover {
+    transform: translateY(-2px);
+    filter: brightness(1.08);
+    box-shadow: 0 12px 32px rgba(55,220,85,.22);
+}
+
+.vg-vehicles .vg-save-arrow {
+    margin-left: auto;
+}
+
+/* SAVED VEHICLE CARD */
+.vg-vehicles .vg-vehicle-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 16px;
+    border: 1px solid rgba(59,143,123,.28);
+    border-radius: 15px;
+    background: rgba(13,43,28,.83);
+    transition: border-color .2s, background .2s, transform .2s;
+}
+
+.vg-vehicles .vg-vehicle-item:hover {
+    border-color: rgba(167,244,50,.45);
+    background: rgba(22,59,36,.90);
+    transform: translateY(-1px);
+}
+
+.vg-vehicles .vg-vehicle-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 58px;
+    height: 58px;
+    flex-shrink: 0;
+    color: var(--vg-lime);
+    background: rgba(167,244,50,.09);
+    border: 1px solid rgba(167,244,50,.24);
+    border-radius: 15px;
+    font-size: 1.35rem;
+}
+
+.vg-vehicles .vg-vehicle-name {
+    color: #F0F8EF;
+    font-weight: 800;
+    font-size: .98rem;
+    overflow-wrap: anywhere;
+}
+
+.vg-vehicles .vg-vehicle-meta {
+    margin-top: 6px;
+    color: #B4CDB8;
+    font-size: .77rem;
+    line-height: 1.7;
+}
+
+.vg-vehicles .vg-range {
+    color: var(--vg-lime);
+    font-weight: 800;
+}
+
+.vg-vehicles .vg-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    margin-top: 9px;
+    padding: 6px 10px;
+    color: #C8F5D1;
+    background: rgba(22,135,78,.22);
+    border: 1px solid rgba(59,143,123,.32);
+    border-radius: 25px;
+    font-size: .7rem;
+    font-weight: 700;
+}
+
+/* DELETE BUTTON */
+.vg-vehicles .vg-delete-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 43px;
+    height: 43px;
+    flex-shrink: 0;
+    color: #FF7979;
+    background: rgba(239,68,68,.06);
+    border: 1px solid rgba(239,68,68,.35);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all .2s;
+}
+
+.vg-vehicles .vg-delete-button:hover {
+    color: white;
+    background: #D94141;
+    border-color: #D94141;
+}
+
+/* EMPTY STATE */
+.vg-vehicles .vg-empty {
+    padding: 35px 16px;
+    text-align: center;
+    color: var(--vg-muted);
+    background: rgba(8,29,19,.65);
+    border: 1px dashed rgba(59,143,123,.45);
+    border-radius: 15px;
+}
+
+.vg-vehicles .vg-empty-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 62px;
+    height: 62px;
+    margin: 0 auto 14px;
+    color: var(--vg-lime);
+    background: rgba(167,244,50,.08);
+    border: 1px solid rgba(167,244,50,.22);
+    border-radius: 18px;
+    font-size: 1.55rem;
+}
+
+.vg-vehicles .vg-empty-title {
+    margin-bottom: 8px;
+    color: var(--vg-sage);
+    font-weight: 800;
+}
+
+.vg-vehicles .vg-garage-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 7px 11px;
+    color: #D0FF83;
+    background: rgba(167,244,50,.07);
+    border: 1px solid rgba(167,244,50,.22);
+    border-radius: 22px;
+    font-size: .7rem;
+    font-weight: 800;
+}
+
+/* SCROLLBAR */
+.vg-vehicles {
+    scrollbar-width: thin;
+    scrollbar-color: var(--vg-lime) var(--vg-panel);
+}
+
+.vg-vehicles::-webkit-scrollbar {
+    width: 7px;
+}
+
+.vg-vehicles::-webkit-scrollbar-track {
+    background: var(--vg-panel);
+}
+
+.vg-vehicles::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg,var(--vg-lime),var(--vg-teal));
+    border-radius: 10px;
+}
+
+/* MOBILE */
+@media(max-width:639px) {
+    .vg-vehicles .vg-panel {
+        padding: 18px;
+        border-radius: 15px;
+    }
+
+    .vg-vehicles .vg-vehicle-item {
+        padding: 12px;
+        gap: 9px;
+    }
+
+    .vg-vehicles .vg-vehicle-icon {
+        width: 43px;
+        height: 43px;
+        font-size: 1.1rem;
+    }
+
+    .vg-vehicles .vg-section-note {
+        margin-left: 0;
+    }
+
+    .vg-vehicles .vg-vehicle-meta {
+        font-size: .72rem;
+    }
+}
+
+@media(prefers-reduced-motion:reduce) {
+    .vg-vehicles *,
+    .vg-vehicles *::before,
+    .vg-vehicles *::after {
+        transition-duration: .01ms !important;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="vg-vehicles max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10">
+
+    <!-- PAGE HEADING -->
+    <header class="mb-8">
+        <div class="vg-eyebrow">
+            <span class="vg-status-dot"></span>
+            YOUR EV GARAGE
+        </div>
+
+        <h1 class="vg-heading">
+            <i class="fa-solid fa-car-side vg-heading-icon mr-2"></i>
+            My Vehicles
+        </h1>
+
+        <p class="vg-subtitle text-sm mt-2 max-w-2xl">
+            Manage your electric vehicles, save their connector types and driving
+            ranges, and make route planning faster.
+        </p>
+    </header>
+
+    <!-- ADD VEHICLE PANEL -->
+    <section class="vg-panel">
+
+        <h2 class="vg-panel-title">
+            <span class="vg-title-icon">
+                <i class="fa-solid fa-plus"></i>
+            </span>
+            <span>Add a Vehicle</span>
+        </h2>
+
+        <p class="vg-section-note">
+            Enter your vehicle details to simplify your next charging journey.
+        </p>
+
+        <form method="POST"
+              action="{{ url_for('add_vehicle') }}"
+              class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+            <input type="hidden" name="csrf_token"
+                   value="{{ csrf_token() }}">
+
+            <div class="sm:col-span-2">
+                <label class="vg-form-label" for="vehicle-name">
+                    <i class="fa-solid fa-car"></i>
+                    Vehicle Name
+                </label>
+
+                <input id="vehicle-name"
+                       type="text"
+                       name="name"
+                       required
+                       placeholder="e.g. My Electric SUV"
+                       class="vg-input">
+            </div>
+
+            <div>
+                <label class="vg-form-label" for="vehicle-plug">
+                    <i class="fa-solid fa-plug"></i>
+                    Connector Type
+                </label>
+
+                <select id="vehicle-plug"
+                        name="plug_type"
+                        required
+                        class="vg-input">
+                    <option value="">Choose plug type</option>
+                    {% for pt in plug_types %}
+                    <option value="{{ pt }}">{{ pt }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div>
+                <label class="vg-form-label" for="vehicle-range">
+                    <i class="fa-solid fa-route"></i>
+                    Full-Charge Range
+                </label>
+
+                <input id="vehicle-range"
+                       type="number"
+                       step="1"
+                       min="1"
+                       name="full_range_km"
+                       required
+                       placeholder="e.g. 350 km"
+                       class="vg-input">
+            </div>
+
+            <div class="sm:col-span-2 pt-1">
+                <button type="submit" class="vg-save-button">
+                    <i class="fa-solid fa-floppy-disk"></i>
+                    Save Vehicle
+                    <i class="fa-solid fa-arrow-right vg-save-arrow"></i>
+                </button>
+            </div>
+        </form>
+    </section>
+
+    <!-- SAVED VEHICLES PANEL -->
+    <section class="vg-panel">
+
+        <div class="flex items-center justify-between gap-3 mb-5">
+            <h2 class="vg-panel-title" style="margin-bottom:0;">
+                <span class="vg-title-icon">
+                    <i class="fa-solid fa-list"></i>
+                </span>
+                <span>Saved Vehicles</span>
+            </h2>
+
+            <span class="vg-garage-badge">
+                <i class="fa-solid fa-bolt"></i>
+                EV GARAGE
+            </span>
+        </div>
+
+        <p class="text-xs uppercase tracking-widest mb-4"
+           style="color:#A7BCA9;font-weight:750;">
+            Your registered vehicles
+        </p>
+
+        <div class="space-y-3">
+            {% for v in vehicles %}
+
+            <div class="vg-vehicle-item">
+
+                <div class="flex items-center gap-3 min-w-0">
+
+                    <div class="vg-vehicle-icon">
+                        <i class="fa-solid fa-car-side"></i>
+                    </div>
+
+                    <div class="min-w-0">
+                        <div class="vg-vehicle-name">
+                            {{ v.name }}
+                        </div>
+
+                        <div class="vg-vehicle-meta">
+                            {{ v.plug_type }}
+                            <span style="color:#3B8F7B;margin:0 5px;">•</span>
+                            <span class="vg-range">
+                                {{ v.full_range_km|round(0)|int }} km
+                            </span>
+                            full-charge range
+                        </div>
+
+                        <span class="vg-tag">
+                            <i class="fa-solid fa-plug"></i>
+                            {{ v.plug_type }}
+                        </span>
+                    </div>
+
+                </div>
+
+                <form method="POST"
+                      action="{{ url_for('delete_vehicle', vehicle_id=v.id) }}"
+                      onsubmit="return confirm('Remove this vehicle?');">
+
+                    <input type="hidden"
+                           name="csrf_token"
+                           value="{{ csrf_token() }}">
+
+                    <button type="submit"
+                            class="vg-delete-button"
+                            title="Delete vehicle"
+                            aria-label="Delete {{ v.name }}">
+                        <i class="fa-solid fa-trash"></i>
+                    </button>
+                </form>
+
+            </div>
+
+            {% else %}
+
+            <div class="vg-empty">
+                <div class="vg-empty-icon">
+                    <i class="fa-solid fa-car-side"></i>
+                </div>
+
+                <div class="vg-empty-title">
+                    Your garage is waiting
+                </div>
+
+                <p class="text-sm" style="line-height:1.8;">
+                    No vehicles saved yet. Add your first vehicle above to make
+                    route planning and connector selection easier.
+                </p>
+            </div>
+
+            {% endfor %}
+        </div>
+    </section>
+
+    <!-- HELPFUL NOTE -->
+    <div class="flex items-start gap-3 mt-5 px-1">
+        <i class="fa-solid fa-circle-info mt-1"
+           style="color:#A7F432;"></i>
+
+        <p class="text-xs"
+           style="color:#B1C4B3;line-height:1.8;">
+            Keep your vehicle's connector type and estimated full-charge range
+            accurate for more useful route planning.
+        </p>
+    </div>
+
+</div>
+{% endblock %}
