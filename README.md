@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # VoltGrid — EV Charging Discovery, Route Planning, Reservation & Verification Platform
 
 A complete Flask + SQLite web app for discovering EV charging stations on a live map,
@@ -231,3 +232,7 @@ and frees the slot immediately.
 - Passwords are hashed with Werkzeug's `generate_password_hash`.
 - To reset all data, stop the server and delete `evcharge.db` plus the contents of
   `static/uploads/` and `static/kyc_uploads/`.
+=======
+# Voltgrid
+VoltGrid is a Flask-based EV charging platform that helps drivers discover charging stations, book charging slots, submit payment proof, and download PDF invoices. It enables station owners to manage stations and bookings, verify payments, and allows administrators to oversee users, stations, and verification activities.
+>>>>>>> 811157a286e1457d028d09400cf19e3f168aaa3f
