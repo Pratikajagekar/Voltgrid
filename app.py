@@ -856,29 +856,89 @@ def route_planner():
 @app.route("/api/geocode")
 @login_required
 def api_geocode():
-    """Proxy to OpenStreetMap Nominatim so the browser never needs a key."""
+    """Geocode a place with Nominatim, falling back to Photon if needed.
+
+    Nominatim is a community service and may throttle or reject requests from
+    shared cloud-hosting IPs. Photon provides a second public OSM-based
+    geocoder so a temporary Nominatim failure does not break route planning.
+    """
     query = request.args.get("q", "").strip()
     if len(query) < 3:
         return jsonify([])
 
+    headers = {
+        "User-Agent": "VoltGrid-EV-Charging-App/1.1 (educational project; route planning)",
+        "Accept": "application/json",
+    }
+    errors = []
+
+    # Provider 1: Nominatim
     try:
         resp = requests.get(
             NOMINATIM_URL,
-            params={"format": "json", "q": query, "limit": 5},
-            headers=NOMINATIM_HEADERS,
-            timeout=8,
+            params={"format": "jsonv2", "q": query, "limit": 5, "addressdetails": 1},
+            headers=headers,
+            timeout=(3.05, 7),
         )
         resp.raise_for_status()
         data = resp.json()
-    except (requests.RequestException, ValueError):
-        return jsonify({"error": "Geocoding service is unavailable right now. Please try again."}), 503
+        if isinstance(data, list):
+            results = [
+                {
+                    "display_name": item.get("display_name", ""),
+                    "lat": float(item["lat"]),
+                    "lon": float(item["lon"]),
+                }
+                for item in data
+                if item.get("lat") is not None and item.get("lon") is not None
+            ]
+            if results:
+                return jsonify(results)
+    except (requests.RequestException, ValueError, TypeError, KeyError) as exc:
+        errors.append(f"Nominatim: {type(exc).__name__}")
 
-    results = [
-        {"display_name": item.get("display_name", ""), "lat": float(item["lat"]), "lon": float(item["lon"])}
-        for item in data
-        if "lat" in item and "lon" in item
-    ]
-    return jsonify(results)
+    # Provider 2: Photon (also based on OpenStreetMap data)
+    try:
+        resp = requests.get(
+            "https://photon.komoot.io/api/",
+            params={"q": query, "limit": 5, "lang": "en"},
+            headers=headers,
+            timeout=(3.05, 7),
+        )
+        resp.raise_for_status()
+        payload = resp.json()
+        features = payload.get("features", []) if isinstance(payload, dict) else []
+        results = []
+        for feature in features:
+            geometry = feature.get("geometry") or {}
+            coords = geometry.get("coordinates") or []
+            props = feature.get("properties") or {}
+            if len(coords) < 2:
+                continue
+            parts = [
+                props.get("name"), props.get("street"), props.get("district"),
+                props.get("city") or props.get("town") or props.get("village"),
+                props.get("state"), props.get("country"), props.get("postcode"),
+            ]
+            display_name = ", ".join(dict.fromkeys(str(part).strip() for part in parts if part))
+            results.append({
+                "display_name": display_name or query,
+                "lat": float(coords[1]),
+                "lon": float(coords[0]),
+            })
+        if results:
+            return jsonify(results)
+    except (requests.RequestException, ValueError, TypeError, KeyError, IndexError) as exc:
+        errors.append(f"Photon: {type(exc).__name__}")
+
+    # An empty list means both providers answered but found no match.
+    # 503 means both external providers were unavailable.
+    app.logger.warning("Geocoding unavailable for query %r (%s)", query, "; ".join(errors) or "no results")
+    if errors:
+        return jsonify({
+            "error": "Location search is temporarily unavailable. Please try again in a moment."
+        }), 503
+    return jsonify([])
 
 
 @app.route("/api/route")
