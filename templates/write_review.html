@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}Write a Review — VoltGrid{% endblock %}
+{% block content %}
+<style>
+.vg-review-page{min-height:calc(100vh - 70px);padding:32px 18px;background:linear-gradient(120deg,rgba(4,22,14,.96),rgba(7,35,22,.91)),url('/static/images/voltgrid-vehicles-bg.png') center/cover fixed;color:#eaf3e7}
+.vg-review-wrap{max-width:760px;margin:auto}.vg-review-card{background:rgba(8,29,19,.94);border:1px solid rgba(59,143,123,.4);border-radius:20px;padding:28px;box-shadow:0 18px 50px #0005}
+.vg-review-muted{color:#a7bca9}.vg-review-label{display:block;color:#c5d5c5;font-size:11px;font-weight:850;letter-spacing:.09em;margin:20px 0 9px}
+.vg-review-input{width:100%;border:1px solid #345b42;background:#0b2117;color:#eaf3e7;border-radius:11px;padding:12px;outline:none}
+.vg-review-input:focus{border-color:#a7f432;box-shadow:0 0 0 3px #a7f43220}
+.vg-star{font-size:34px;color:#536657;background:none;border:0;padding:3px;cursor:pointer}.vg-star.active{color:#a7f432}
+.vg-review-submit{background:linear-gradient(100deg,#a7f432,#65d879);color:#102114;font-weight:900;border-radius:11px;padding:13px 18px}
+.vg-review-cancel{display:inline-flex;align-items:center;padding:13px 18px;border:1px solid #345b42;border-radius:11px;color:#dceade;text-decoration:none}
+@media(max-width:600px){.vg-review-card{padding:19px}.vg-review-page{padding:20px 12px}}
+</style>
+<div class="vg-review-page">
+ <div class="vg-review-wrap">
+  <a href="{{ url_for('history') }}" class="vg-review-muted text-sm hover:text-lime-300">← Back to My Reservations</a>
+  <section class="vg-review-card mt-5">
+   <div class="text-xs font-extrabold tracking-widest text-lime-300">VOLTGRID · DRIVER FEEDBACK</div>
+   <h1 class="text-2xl md:text-3xl font-black mt-2">Write a Review</h1>
+   <p class="vg-review-muted mt-2">Share your charging experience to help other EV drivers.</p>
+   <div class="rounded-xl border border-emerald-900 bg-emerald-950/40 p-4 mt-6">
+    <div class="text-xs vg-review-muted">CHARGING STATION</div>
+    <div class="font-extrabold text-lg mt-1">{{ booking.station.name }}</div>
+    <div class="text-sm vg-review-muted mt-1">Booking VG-BKG-{{ '%06d'|format(booking.id) }} · {{ booking.booking_date.strftime('%d %b %Y') }}</div>
+   </div>
+   <form method="POST" class="mt-5">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <label class="vg-review-label">YOUR RATING</label>
+    <div class="flex items-center gap-2" id="rating-stars" role="radiogroup" aria-label="Rating from one to five stars">
+     {% for n in range(1,6) %}
+      <button type="button" class="vg-star {% if review and review.rating >= n %}active{% endif %}" data-rating="{{ n }}" aria-label="{{ n }} star{% if n != 1 %}s{% endif %}"><i class="fa-solid fa-star"></i></button>
+     {% endfor %}
+    </div>
+    <input type="hidden" name="rating" id="rating-value" value="{{ review.rating if review else 0 }}">
+    <p class="vg-review-muted text-xs mt-2" id="rating-help">{% if review %}{{ review.rating }} out of 5 stars{% else %}Select your rating{% endif %}</p>
+    <label class="vg-review-label" for="review-comment">YOUR EXPERIENCE (OPTIONAL)</label>
+    <textarea class="vg-review-input" id="review-comment" name="comment" rows="5" maxlength="500" placeholder="Tell us about the charging speed, cleanliness, staff and overall experience...">{{ review.comment if review and review.comment else '' }}</textarea>
+    <p class="vg-review-muted text-xs text-right mt-2">Maximum 500 characters</p>
+    <div class="flex flex-wrap gap-3 mt-6">
+     <button type="submit" class="vg-review-submit"><i class="fa-solid fa-paper-plane mr-2"></i>{{ 'Update Review' if review else 'Submit Review' }}</button>
+     <a href="{{ url_for('history') }}" class="vg-review-cancel">Cancel</a>
+    </div>
+   </form>
+  </section>
+ </div>
+</div>
+<script>
+(function(){
+ const buttons=[...document.querySelectorAll('.vg-star')];
+ const value=document.getElementById('rating-value');
+ const help=document.getElementById('rating-help');
+ function paint(r){buttons.forEach(b=>b.classList.toggle('active',Number(b.dataset.rating)<=r));help.textContent=r?`${r} out of 5 stars`:'Select your rating';value.value=r;}
+ buttons.forEach(b=>b.addEventListener('click',()=>paint(Number(b.dataset.rating))));
+ paint(Number(value.value||0));
+})();
+</script>
+{% endblock %}

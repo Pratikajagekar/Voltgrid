@@ -1,0 +1,653 @@
+
+{% extends "base.html" %}
+{% block title %}Manage Users — VoltGrid Admin{% endblock %}
+
+{% block extra_head %}
+<style>
+.users-page {
+    --lime: #b7ff45;
+    --green: #63e98c;
+    --teal: #43e6cb;
+    --text: #f3fff6;
+    --muted: #b7d0c0;
+    --border: rgba(87, 197, 132, .28);
+
+    min-height: calc(100vh - 64px);
+    padding: 30px;
+    color: var(--text);
+    background:
+        linear-gradient(110deg, rgba(3,22,14,.94), rgba(3,28,18,.84)),
+        url("/static/images/voltgrid-dashboard-bg.png") center / cover fixed;
+}
+
+.users-page * { box-sizing: border-box; }
+
+.users-page .page-title {
+    color: #f5fff7;
+    font-size: clamp(27px, 3vw, 37px);
+    font-weight: 850;
+    letter-spacing: -1px;
+}
+
+.users-page .muted { color: var(--muted); }
+
+.users-page .eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 13px;
+    border: 1px solid rgba(183,255,69,.3);
+    border-radius: 30px;
+    background: rgba(90,145,43,.14);
+    color: var(--lime);
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: .8px;
+    text-transform: uppercase;
+}
+
+.users-page .panel {
+    background: rgba(4, 28, 19, .86);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    box-shadow: 0 18px 50px rgba(0,0,0,.16);
+    backdrop-filter: blur(14px);
+}
+
+.users-page .filter-link {
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    padding: 10px 15px;
+    border-radius: 10px;
+    border: 1px solid rgba(126,171,141,.3);
+    color: #c6d9cc;
+    background: rgba(9,35,24,.75);
+    font-size: 12px;
+    font-weight: 700;
+    text-decoration: none;
+    transition: .2s ease;
+}
+
+.users-page .filter-link:hover {
+    border-color: var(--lime);
+    color: var(--lime);
+    background: rgba(183,255,69,.08);
+}
+
+.users-page .filter-link.selected {
+    background: var(--lime);
+    border-color: var(--lime);
+    color: #102416;
+}
+
+.users-page .table-scroll {
+    width: 100%;
+    overflow-x: auto;
+    border-radius: 12px;
+}
+
+.users-page table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    color: var(--text);
+    font-size: 13px;
+}
+
+.users-page thead th {
+    padding: 15px 16px;
+    text-align: left;
+    white-space: nowrap;
+    background: rgba(18,66,44,.72);
+    color: #c7dfcf;
+    border-top: 1px solid rgba(87,197,132,.2);
+    border-bottom: 1px solid rgba(87,197,132,.24);
+    font-size: 10px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: .6px;
+}
+
+.users-page tbody td {
+    padding: 15px 16px;
+    border-bottom: 1px solid rgba(87,197,132,.12);
+    vertical-align: middle;
+}
+
+.users-page tbody tr {
+    background: rgba(3,24,16,.24);
+    transition: background .2s ease;
+}
+
+.users-page tbody tr:hover {
+    background: rgba(41,99,62,.25);
+}
+
+.users-page tbody tr:last-child td { border-bottom: 0; }
+
+.users-page .username {
+    color: #f5fff7;
+    font-weight: 750;
+    white-space: nowrap;
+}
+
+.users-page .email {
+    color: #bfd4c6;
+    overflow-wrap: anywhere;
+}
+
+.users-page .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 10px;
+    border-radius: 30px;
+    font-size: 10px;
+    font-weight: 800;
+    white-space: nowrap;
+    border: 1px solid transparent;
+}
+
+.users-page .driver {
+    color: var(--lime);
+    background: rgba(183,255,69,.09);
+    border-color: rgba(183,255,69,.32);
+}
+
+.users-page .owner {
+    color: #57e5ff;
+    background: rgba(30,198,232,.09);
+    border-color: rgba(30,198,232,.35);
+}
+
+.users-page .approved {
+    color: #51f5a0;
+    background: rgba(49,235,139,.09);
+    border-color: rgba(49,235,139,.4);
+}
+
+.users-page .pending {
+    color: #ffd45d;
+    background: rgba(255,196,52,.09);
+    border-color: rgba(255,196,52,.45);
+}
+
+.users-page .rejected {
+    color: #ff8888;
+    background: rgba(255,83,83,.09);
+    border-color: rgba(255,83,83,.4);
+}
+
+.users-page .na {
+    color: #c5d6cb;
+    background: rgba(148,176,158,.1);
+    border-color: rgba(148,176,158,.22);
+}
+
+.users-page .verified {
+    color: #5af0a0;
+    white-space: nowrap;
+    font-size: 12px;
+}
+
+.users-page .unverified {
+    color: #ff9b9b;
+    white-space: nowrap;
+    font-size: 12px;
+}
+
+.users-page .action-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 8px 10px;
+    border: 1px solid;
+    border-radius: 8px;
+    font-size: 11px;
+    font-weight: 800;
+    cursor: pointer;
+    transition: .2s ease;
+    white-space: nowrap;
+}
+
+.users-page .approve-btn {
+    color: #6cf4a5;
+    background: rgba(43,225,124,.08);
+    border-color: rgba(43,225,124,.42);
+}
+
+.users-page .approve-btn:hover {
+    color: #082015;
+    background: #6cf4a5;
+}
+
+.users-page .reject-btn {
+    color: #ff9292;
+    background: rgba(255,86,86,.08);
+    border-color: rgba(255,86,86,.42);
+}
+
+.users-page .reject-btn:hover {
+    color: #280909;
+    background: #ff9292;
+}
+
+.users-page .document-link {
+    color: #49dcff;
+    font-size: 11px;
+    font-weight: 750;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.users-page .document-link:hover {
+    color: #b5f4ff;
+    text-decoration: underline;
+}
+
+.users-page .stat-card {
+    padding: 17px 19px;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    background: rgba(9,43,29,.78);
+}
+
+.users-page .stat-label {
+    color: #b9d1c1;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.users-page .stat-value {
+    color: var(--lime);
+    font-size: 26px;
+    font-weight: 850;
+    margin-top: 5px;
+}
+
+.users-page .empty-state {
+    padding: 45px 20px;
+    text-align: center;
+    color: var(--muted);
+}
+
+/* Reject modal */
+.users-page .modal-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 18px;
+    background: rgba(0,10,6,.82);
+    backdrop-filter: blur(9px);
+}
+
+.users-page .modal-card {
+    width: 100%;
+    max-width: 490px;
+    padding: 23px;
+    border: 1px solid rgba(255,104,104,.55);
+    border-radius: 17px;
+    background: linear-gradient(145deg,#10251c,#081710);
+    box-shadow: 0 20px 80px rgba(0,0,0,.55);
+}
+
+.users-page .modal-title {
+    color: #fff;
+    font-size: 18px;
+    font-weight: 800;
+}
+
+.users-page .reason-field {
+    display: block;
+    width: 100%;
+    resize: vertical;
+    min-height: 110px;
+    padding: 13px;
+    border-radius: 10px;
+    border: 1px solid #3b5e49;
+    background: #07150e;
+    color: #f3fff6;
+    outline: none;
+}
+
+.users-page .reason-field::placeholder { color: #93ad9c; }
+
+.users-page .reason-field:focus {
+    border-color: #ff7777;
+    box-shadow: 0 0 0 3px rgba(255,100,100,.12);
+}
+
+.users-page .cancel-btn,
+.users-page .confirm-btn {
+    padding: 11px 14px;
+    border-radius: 9px;
+    font-size: 12px;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.users-page .cancel-btn {
+    border: 1px solid #46604e;
+    background: #14291e;
+    color: #e0eee4;
+}
+
+.users-page .cancel-btn:hover { background: #203c2b; }
+
+.users-page .confirm-btn {
+    border: 1px solid #ff8b8b;
+    background: #ff7777;
+    color: #290909;
+}
+
+.users-page .confirm-btn:hover { background: #ff9999; }
+
+[x-cloak] { display: none !important; }
+
+@media(max-width: 700px) {
+    .users-page {
+        padding: 20px 12px;
+        background-attachment: scroll;
+    }
+
+    .users-page .page-title { font-size: 27px; }
+
+    .users-page .panel { border-radius: 13px; }
+
+    .users-page thead th,
+    .users-page tbody td { padding: 12px; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="users-page"
+     x-data="{ rejectModal: false, rejectUserId: null, rejectUsername: '' }">
+
+  <div class="max-w-7xl mx-auto">
+
+    <!-- Header -->
+    <header class="flex flex-col xl:flex-row xl:items-end justify-between gap-5 mb-7">
+      <div>
+        <div class="eyebrow mb-4">
+          <span class="inline-block w-2 h-2 rounded-full"
+                style="background:#b7ff45;box-shadow:0 0 10px #b7ff45"></span>
+          User Management
+        </div>
+
+        <h1 class="page-title">
+          <i class="fa-solid fa-users mr-2" style="color:#b7ff45"></i>
+          Manage Users
+        </h1>
+
+        <p class="muted text-sm mt-3">
+          All registered drivers and station owners. Manage accounts and verify identities.
+        </p>
+      </div>
+
+      <nav class="flex flex-wrap gap-2" aria-label="Filter users">
+        <a href="{{ url_for('admin_users') }}"
+           class="filter-link {{ 'selected' if not role_filter else '' }}">
+          <i class="fa-solid fa-users mr-2"></i>All Users
+        </a>
+
+        <a href="{{ url_for('admin_users') }}?role=vehicle_owner"
+           class="filter-link {{ 'selected' if role_filter == 'vehicle_owner' else '' }}">
+          <i class="fa-solid fa-car-side mr-2"></i>Drivers
+        </a>
+
+        <a href="{{ url_for('admin_users') }}?role=station_owner"
+           class="filter-link {{ 'selected' if role_filter == 'station_owner' else '' }}">
+          <i class="fa-solid fa-charging-station mr-2"></i>Station Owners
+        </a>
+      </nav>
+    </header>
+
+    <!-- Overview -->
+    <section class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
+      <div class="stat-card">
+        <div class="stat-label">
+          <i class="fa-solid fa-users mr-2" style="color:#43e6cb"></i>
+          Displayed Users
+        </div>
+        <div class="stat-value">{{ users|length }}</div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-label">
+          <i class="fa-solid fa-id-card mr-2" style="color:#ffd45d"></i>
+          Verification Queue
+        </div>
+        <div class="stat-value" style="color:#ffd45d">
+          {{ users|selectattr('kyc_status','equalto','Pending')|list|length }}
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-label">
+          <i class="fa-solid fa-envelope mr-2" style="color:#57e5ff"></i>
+          Unverified Emails
+        </div>
+        <div class="stat-value" style="color:#57e5ff">
+          {{ users|rejectattr('email_verified')|list|length }}
+        </div>
+      </div>
+    </section>
+
+    <!-- Users table -->
+    <section class="panel overflow-hidden">
+      <div class="flex flex-wrap items-center justify-between gap-3 p-5"
+           style="border-bottom:1px solid rgba(87,197,132,.2)">
+        <div>
+          <h2 class="text-lg font-bold text-white">
+            <i class="fa-solid fa-address-book mr-2" style="color:#b7ff45"></i>
+            Registered Users
+          </h2>
+          <p class="muted text-xs mt-1">
+            Review account details, email verification, and KYC status.
+          </p>
+        </div>
+
+        <span class="eyebrow">
+          <i class="fa-solid fa-shield-halved"></i>
+          Admin Access
+        </span>
+      </div>
+
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>Username</th>
+              <th>Email</th>
+              <th>Role</th>
+              <th>Email Verified</th>
+              <th>KYC Status</th>
+              <th>Joined</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {% for u in users %}
+            <tr>
+              <td><span class="username">{{ u.username }}</span></td>
+
+              <td><span class="email">{{ u.email }}</span></td>
+
+              <td>
+                {% if u.is_vehicle_owner %}
+                  <span class="pill driver">Driver</span>
+                {% else %}
+                  <span class="pill owner">Station Owner</span>
+                {% endif %}
+              </td>
+
+              <td>
+                {% if u.email_verified %}
+                  <span class="verified">
+                    <i class="fa-solid fa-circle-check mr-1"></i>Verified
+                  </span>
+                {% else %}
+                  <span class="unverified">
+                    <i class="fa-solid fa-circle-xmark mr-1"></i>Unverified
+                  </span>
+                {% endif %}
+              </td>
+
+              <td>
+                {% if u.kyc_status == 'Approved' %}
+                  <span class="pill approved">Approved</span>
+                {% elif u.kyc_status == 'Pending' %}
+                  <span class="pill pending">Pending</span>
+                {% elif u.kyc_status == 'Rejected' %}
+                  <span class="pill rejected">Rejected</span>
+                  {% if u.kyc_rejection_reason %}
+                    <div class="text-xs mt-2" style="color:#ff9999">
+                      {{ u.kyc_rejection_reason }}
+                    </div>
+                  {% endif %}
+                {% else %}
+                  <span class="pill na">N/A</span>
+                {% endif %}
+              </td>
+
+              <td class="muted whitespace-nowrap text-xs">
+                {{ u.created_at.strftime('%d %b %Y') if u.created_at else '—' }}
+              </td>
+
+              <td>
+                <div class="flex flex-wrap items-center gap-2">
+                  {% if u.is_station_owner and u.kyc_document %}
+                    <a href="{{ url_for('kyc_file', filename=u.kyc_document) }}"
+                       target="_blank"
+                       rel="noopener noreferrer"
+                       class="document-link">
+                      <i class="fa-solid fa-file-lines mr-1"></i>View Document
+                    </a>
+                  {% endif %}
+
+                  {% if u.is_station_owner and u.kyc_status == 'Pending' %}
+                    <form method="POST"
+                          action="{{ url_for('admin_approve_kyc', user_id=u.id) }}">
+                      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                      <button type="submit" class="action-btn approve-btn">
+                        <i class="fa-solid fa-check"></i>Approve
+                      </button>
+                    </form>
+
+                    <button type="button"
+                            class="action-btn reject-btn"
+                            @click="rejectModal = true; rejectUserId = {{ u.id|tojson }}; rejectUsername = {{ u.username|tojson }}">
+                      <i class="fa-solid fa-xmark"></i>Reject
+                    </button>
+                  {% endif %}
+
+                  {% if not (u.is_station_owner and u.kyc_document) and not (u.is_station_owner and u.kyc_status == 'Pending') %}
+                    <span class="muted">—</span>
+                  {% endif %}
+                </div>
+              </td>
+            </tr>
+            {% else %}
+            <tr>
+              <td colspan="7">
+                <div class="empty-state">
+                  <i class="fa-solid fa-users text-3xl mb-3"
+                     style="color:#76a98a"></i>
+                  <p class="font-semibold text-white">No users found</p>
+                  <p class="text-xs mt-2">Try selecting a different user filter.</p>
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <div class="flex flex-wrap justify-between gap-2 p-4 text-xs muted"
+           style="border-top:1px solid rgba(87,197,132,.15)">
+        <span>Showing {{ users|length }} user(s)</span>
+        <span><i class="fa-solid fa-lock mr-1" style="color:#b7ff45"></i>Secure administration</span>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- Reject KYC modal -->
+  <div x-show="rejectModal"
+       x-cloak
+       x-transition.opacity
+       @keydown.escape.window="rejectModal = false"
+       @click.self="rejectModal = false"
+       class="modal-backdrop">
+
+    <section class="modal-card"
+             role="dialog"
+             aria-modal="true"
+             aria-labelledby="reject-title"
+             @click.stop>
+
+      <div class="flex items-start justify-between gap-4 mb-5">
+        <div>
+          <div class="eyebrow mb-3"
+               style="color:#ff9999;border-color:rgba(255,104,104,.35);background:rgba(255,104,104,.08)">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+            KYC Review
+          </div>
+
+          <h3 id="reject-title" class="modal-title">
+            Reject KYC
+          </h3>
+
+          <p class="muted text-sm mt-2">
+            For <span class="font-bold text-white" x-text="rejectUsername"></span>
+          </p>
+        </div>
+
+        <button type="button"
+                @click="rejectModal = false"
+                class="muted text-xl"
+                aria-label="Close modal">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <form :action="'/admin/kyc/' + rejectUserId + '/reject'" method="POST">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <label for="reject-reason" class="block text-sm font-semibold mb-2">
+          Reason for rejection
+        </label>
+
+        <textarea id="reject-reason"
+                  name="reason"
+                  rows="4"
+                  required
+                  maxlength="1000"
+                  placeholder="Explain why the submitted KYC document is being rejected..."
+                  class="reason-field mb-5"></textarea>
+
+        <div class="flex gap-3">
+          <button type="button"
+                  @click="rejectModal = false"
+                  class="cancel-btn flex-1">
+            Cancel
+          </button>
+
+          <button type="submit" class="confirm-btn flex-1">
+            <i class="fa-solid fa-xmark mr-1"></i>
+            Confirm Reject
+          </button>
+        </div>
+      </form>
+    </section>
+  </div>
+
+</div>
+{% endblock %}

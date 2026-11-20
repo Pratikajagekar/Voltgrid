@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}Payment Proof — VoltGrid{% endblock %}
+{% block content %}
+<style>
+.vg-proof-page{min-height:calc(100vh - 70px);padding:32px 18px;background:linear-gradient(120deg,rgba(4,22,14,.96),rgba(7,35,22,.91)),url('/static/images/voltgrid-vehicles-bg.png') center/cover fixed;color:#eaf3e7}
+.vg-proof-wrap{max-width:1000px;margin:auto}.vg-proof-card{background:rgba(8,29,19,.92);border:1px solid rgba(59,143,123,.4);border-radius:20px;padding:26px;box-shadow:0 18px 50px #0005}
+.vg-proof-muted{color:#a7bca9}.vg-proof-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px;margin:22px 0}
+.vg-proof-item{padding:14px;border:1px solid rgba(59,143,123,.28);border-radius:12px;background:#10291c}
+.vg-proof-label{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:#a7bca9;font-weight:800}.vg-proof-value{margin-top:6px;font-weight:750;overflow-wrap:anywhere}
+.vg-proof-image{display:block;max-width:100%;max-height:650px;margin:14px auto 0;border-radius:12px;border:1px solid #345a40;object-fit:contain;background:#06170e}
+.vg-proof-btn{display:inline-flex;align-items:center;gap:8px;padding:11px 16px;border-radius:10px;background:#a7f432;color:#102114;font-weight:850;text-decoration:none}
+.vg-proof-secondary{background:#173b29;color:#eaf3e7;border:1px solid #35634a}
+@media(max-width:600px){.vg-proof-card{padding:18px}.vg-proof-page{padding:20px 12px}}
+</style>
+<div class="vg-proof-page">
+ <div class="vg-proof-wrap">
+  <a href="{{ url_for('history') }}" class="vg-proof-muted text-sm hover:text-lime-300">← Back to My Reservations</a>
+  <div class="vg-proof-card mt-5">
+   <div class="flex flex-wrap items-start justify-between gap-4">
+    <div><div class="text-xs font-extrabold tracking-widest text-lime-300">VOLTGRID · PAYMENT RECORD</div><h1 class="text-2xl md:text-3xl font-black mt-2">Payment Proof</h1><p class="vg-proof-muted mt-2">{{ booking.station.name }}</p></div>
+    <span class="rounded-full px-3 py-2 text-xs font-extrabold {% if booking.status == 'Approved' %}bg-emerald-900 text-emerald-200{% elif booking.status == 'Pending Verification' %}bg-amber-900 text-amber-200{% else %}bg-slate-800 text-slate-200{% endif %}">{{ booking.status }}</span>
+   </div>
+   <div class="vg-proof-grid">
+    <div class="vg-proof-item"><div class="vg-proof-label">Booking ID</div><div class="vg-proof-value">VG-BKG-{{ '%06d'|format(booking.id) }}</div></div>
+    <div class="vg-proof-item"><div class="vg-proof-label">Transaction ID</div><div class="vg-proof-value">{{ booking.transaction_id or 'Not submitted yet' }}</div></div>
+    <div class="vg-proof-item"><div class="vg-proof-label">Amount</div><div class="vg-proof-value">{{ booking.station.currency_symbol }}{{ '%.2f'|format(booking.amount_paid) }}</div></div>
+    <div class="vg-proof-item"><div class="vg-proof-label">Reserved slot</div><div class="vg-proof-value">{{ booking.booking_date.strftime('%d %b %Y') }} · {{ booking.time_slot }}</div></div>
+   </div>
+   <div class="border-t border-emerald-900 pt-5">
+    <h2 class="font-extrabold text-lg">Uploaded payment screenshot</h2>
+    {% if booking.payment_proof %}
+      <a href="{{ url_for('uploaded_file', filename=booking.payment_proof) }}" target="_blank" rel="noopener">
+       <img class="vg-proof-image" src="{{ url_for('uploaded_file', filename=booking.payment_proof) }}" alt="Payment proof uploaded for booking {{ booking.id }}">
+      </a>
+      <p class="vg-proof-muted text-xs text-center mt-2">Select the image to open it at full size.</p>
+      <div class="flex flex-wrap gap-3 mt-5">
+       <a class="vg-proof-btn vg-proof-secondary" href="{{ url_for('uploaded_file', filename=booking.payment_proof) }}" download><i class="fa-solid fa-download"></i> Download Proof</a>
+       {% if booking.status == 'Approved' %}
+        <a class="vg-proof-btn" href="{{ url_for('booking_invoice', booking_id=booking.id) }}"><i class="fa-solid fa-file-invoice"></i> View Invoice</a>
+        <a class="vg-proof-btn vg-proof-secondary" href="{{ url_for('booking_invoice_pdf', booking_id=booking.id) }}"><i class="fa-solid fa-file-pdf"></i> Download Invoice PDF</a>
+       {% endif %}
+      </div>
+    {% else %}
+      <div class="rounded-xl border border-dashed border-emerald-700 bg-emerald-950/40 p-8 text-center mt-4">
+       <i class="fa-solid fa-cloud-arrow-up text-3xl text-emerald-400"></i>
+       <p class="font-bold mt-3">Payment screenshot not uploaded yet</p>
+       <p class="vg-proof-muted text-sm mt-1">{% if booking.status == 'Accepted - Awaiting Payment' %}Return to My Reservations to submit your transaction ID and screenshot.{% else %}The payment upload option will be available after the station owner accepts your booking.{% endif %}</p>
+      </div>
+    {% endif %}
+    {% if booking.status == 'Approved' and not booking.payment_proof %}
+      <a class="vg-proof-btn mt-4" href="{{ url_for('booking_invoice', booking_id=booking.id) }}">View Invoice</a>
+    {% elif booking.status != 'Approved' %}
+      <p class="vg-proof-muted text-sm mt-4">Your invoice becomes available after the station owner verifies your payment.</p>
+    {% endif %}
+   </div>
+  </div>
+ </div>
+</div>
+{% endblock %}

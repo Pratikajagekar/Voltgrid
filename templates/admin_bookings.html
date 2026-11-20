@@ -1,0 +1,434 @@
+
+{% extends "base.html" %}
+{% block title %}All Bookings — VoltGrid Admin{% endblock %}
+
+{% block extra_head %}
+<style>
+.bookings-page {
+    --lime: #b7ff45;
+    --green: #63e98c;
+    --teal: #43e6cb;
+    --text: #f3fff6;
+    --muted: #b7d0c0;
+    --border: rgba(87,197,132,.3);
+
+    min-height: calc(100vh - 64px);
+    padding: 30px;
+    color: var(--text);
+    background:
+        linear-gradient(110deg, rgba(3,22,14,.94), rgba(3,28,18,.83)),
+        url("/static/images/voltgrid-vehicles-bg.png") center / cover fixed;
+}
+
+.bookings-page * { box-sizing: border-box; }
+
+.bookings-page .page-title {
+    color: #f5fff7;
+    font-size: clamp(27px, 3vw, 37px);
+    font-weight: 850;
+    letter-spacing: -1px;
+}
+
+.bookings-page .muted { color: var(--muted); }
+
+.bookings-page .eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 13px;
+    border: 1px solid rgba(183,255,69,.3);
+    border-radius: 30px;
+    background: rgba(90,145,43,.14);
+    color: var(--lime);
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: .8px;
+    text-transform: uppercase;
+}
+
+.bookings-page .panel {
+    background: rgba(4,28,19,.87);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    box-shadow: 0 18px 50px rgba(0,0,0,.18);
+    backdrop-filter: blur(14px);
+    overflow: hidden;
+}
+
+.bookings-page .table-scroll {
+    width: 100%;
+    overflow-x: auto;
+}
+
+.bookings-page table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    color: var(--text);
+    font-size: 13px;
+}
+
+.bookings-page thead th {
+    padding: 16px;
+    text-align: left;
+    white-space: nowrap;
+    background: rgba(18,66,44,.78);
+    color: #c7dfcf;
+    border-bottom: 1px solid rgba(87,197,132,.25);
+    font-size: 10px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: .65px;
+}
+
+.bookings-page tbody tr {
+    background: rgba(3,24,16,.25);
+    transition: background .2s ease;
+}
+
+.bookings-page tbody tr:hover {
+    background: rgba(41,99,62,.26);
+}
+
+.bookings-page tbody td {
+    padding: 16px;
+    border-bottom: 1px solid rgba(87,197,132,.13);
+    vertical-align: middle;
+}
+
+.bookings-page tbody tr:last-child td { border-bottom: 0; }
+
+.bookings-page .driver-name {
+    color: #f5fff7;
+    font-weight: 750;
+    white-space: nowrap;
+}
+
+.bookings-page .station-name {
+    color: #d5e8db;
+    font-weight: 600;
+    min-width: 130px;
+}
+
+.bookings-page .date,
+.bookings-page .slot {
+    color: #bfd4c6;
+    font-size: 11px;
+    white-space: nowrap;
+}
+
+.bookings-page .amount {
+    color: #79f4a5;
+    font-weight: 850;
+    white-space: nowrap;
+}
+
+.bookings-page .status {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 6px 10px;
+    border: 1px solid transparent;
+    border-radius: 30px;
+    font-size: 10px;
+    font-weight: 800;
+    white-space: nowrap;
+}
+
+.bookings-page .status-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+}
+
+.bookings-page .status-approved {
+    color: #65f2a2;
+    background: rgba(49,235,139,.09);
+    border-color: rgba(49,235,139,.36);
+}
+
+.bookings-page .status-approved .status-dot {
+    background: #65f2a2;
+    box-shadow: 0 0 9px rgba(101,242,162,.6);
+}
+
+.bookings-page .status-pending {
+    color: #ffd45d;
+    background: rgba(255,196,52,.09);
+    border-color: rgba(255,196,52,.45);
+}
+
+.bookings-page .status-pending .status-dot {
+    background: #ffd45d;
+}
+
+.bookings-page .status-rejected {
+    color: #ff8888;
+    background: rgba(255,83,83,.09);
+    border-color: rgba(255,83,83,.4);
+}
+
+.bookings-page .status-rejected .status-dot {
+    background: #ff8888;
+}
+
+.bookings-page .status-cancelled {
+    color: #c2d0c7;
+    background: rgba(148,176,158,.1);
+    border-color: rgba(148,176,158,.24);
+}
+
+.bookings-page .status-cancelled .status-dot {
+    background: #94a99a;
+}
+
+.bookings-page .status-other {
+    color: #7de8ff;
+    background: rgba(66,215,255,.08);
+    border-color: rgba(66,215,255,.3);
+}
+
+.bookings-page .status-other .status-dot {
+    background: #7de8ff;
+}
+
+.bookings-page .stat-card {
+    padding: 17px 19px;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    background: rgba(9,43,29,.8);
+}
+
+.bookings-page .stat-label {
+    color: #b9d1c1;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.bookings-page .stat-value {
+    color: var(--lime);
+    font-size: 26px;
+    font-weight: 850;
+    margin-top: 5px;
+}
+
+.bookings-page .empty-state {
+    padding: 50px 20px;
+    text-align: center;
+    color: var(--muted);
+}
+
+@media (max-width: 700px) {
+    .bookings-page {
+        padding: 20px 12px;
+        background-attachment: scroll;
+    }
+
+    .bookings-page .page-title { font-size: 27px; }
+    .bookings-page .panel { border-radius: 13px; }
+
+    .bookings-page thead th,
+    .bookings-page tbody td { padding: 12px; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<main class="bookings-page">
+  <div class="max-w-7xl mx-auto">
+
+    <!-- Page heading -->
+    <header class="mb-7">
+      <div class="eyebrow mb-4">
+        <span class="inline-block w-2 h-2 rounded-full"
+              style="background:#b7ff45;box-shadow:0 0 10px #b7ff45"></span>
+        Reservation Ledger
+      </div>
+
+      <h1 class="page-title">
+        <i class="fa-solid fa-receipt mr-2"
+           style="color:#b7ff45"></i>
+        All Bookings
+      </h1>
+
+      <p class="muted text-sm mt-3">
+        Review the most recent 200 reservations across the VoltGrid platform.
+      </p>
+    </header>
+
+    <!-- Overview cards -->
+    <section class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
+
+      <div class="stat-card">
+        <div class="stat-label">
+          <i class="fa-solid fa-calendar-check mr-2"
+             style="color:#43e6cb"></i>
+          Recent Bookings
+        </div>
+        <div class="stat-value">{{ bookings|length }}</div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-label">
+          <i class="fa-solid fa-circle-check mr-2"
+             style="color:#65f2a2"></i>
+          Approved
+        </div>
+        <div class="stat-value" style="color:#65f2a2">
+          {{ bookings|selectattr('status','equalto','Approved')|list|length }}
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-label">
+          <i class="fa-solid fa-hourglass-half mr-2"
+             style="color:#ffd45d"></i>
+          Pending Verification
+        </div>
+        <div class="stat-value" style="color:#ffd45d">
+          {{ bookings|selectattr('status','equalto','Pending Verification')|list|length }}
+        </div>
+      </div>
+
+    </section>
+
+    <!-- Bookings table -->
+    <section class="panel">
+
+      <div class="flex flex-wrap items-center justify-between gap-3 p-5"
+           style="border-bottom:1px solid rgba(87,197,132,.2)">
+
+        <div>
+          <h2 class="text-lg font-bold text-white">
+            <i class="fa-solid fa-list-check mr-2"
+               style="color:#b7ff45"></i>
+            Reservation History
+          </h2>
+
+          <p class="muted text-xs mt-1">
+            Driver details, charging stations, booking slots, amounts, and status.
+          </p>
+        </div>
+
+        <span class="eyebrow">
+          <i class="fa-solid fa-shield-halved"></i>
+          Admin View
+        </span>
+      </div>
+
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>Driver</th>
+              <th>Station</th>
+              <th>Date</th>
+              <th>Slot</th>
+              <th>Amount</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {% for b in bookings %}
+            <tr>
+              <td>
+                <span class="driver-name">
+                  <i class="fa-solid fa-user mr-2"
+                     style="color:#7bc9a0"></i>
+                  {{ b.driver.username }}
+                </span>
+              </td>
+
+              <td>
+                <span class="station-name">
+                  <i class="fa-solid fa-charging-station mr-2"
+                     style="color:#43e6cb"></i>
+                  {{ b.station.name }}
+                </span>
+              </td>
+
+              <td class="date">
+                <i class="fa-regular fa-calendar mr-1"
+                   style="color:#7bc9a0"></i>
+                {{ b.booking_date.strftime('%d %b %Y') if b.booking_date else '—' }}
+              </td>
+
+              <td class="slot">
+                <i class="fa-regular fa-clock mr-1"
+                   style="color:#7bc9a0"></i>
+                {{ b.time_slot }}
+              </td>
+
+              <td>
+                <span class="amount">
+                  ₹{{ "%.2f"|format(b.amount_paid or 0) }}
+                </span>
+              </td>
+
+              <td>
+                {% if b.status == 'Approved' %}
+                  <span class="status status-approved">
+                    <span class="status-dot"></span>
+                    {{ b.status }}
+                  </span>
+                {% elif b.status == 'Pending Verification' %}
+                  <span class="status status-pending">
+                    <span class="status-dot"></span>
+                    {{ b.status }}
+                  </span>
+                {% elif b.status == 'Rejected' %}
+                  <span class="status status-rejected">
+                    <span class="status-dot"></span>
+                    {{ b.status }}
+                  </span>
+                {% elif b.status == 'Cancelled' %}
+                  <span class="status status-cancelled">
+                    <span class="status-dot"></span>
+                    {{ b.status }}
+                  </span>
+                {% else %}
+                  <span class="status status-other">
+                    <span class="status-dot"></span>
+                    {{ b.status }}
+                  </span>
+                {% endif %}
+              </td>
+            </tr>
+
+            {% else %}
+            <tr>
+              <td colspan="6">
+                <div class="empty-state">
+                  <i class="fa-solid fa-receipt text-4xl mb-4"
+                     style="color:#77a98a"></i>
+
+                  <p class="text-white font-semibold">
+                    No bookings yet
+                  </p>
+
+                  <p class="text-xs mt-2">
+                    Reservation records will appear here when bookings are created.
+                  </p>
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <footer class="flex flex-wrap justify-between gap-2 p-4 text-xs muted"
+              style="border-top:1px solid rgba(87,197,132,.15)">
+        <span>Showing {{ bookings|length }} booking(s)</span>
+        <span>
+          <i class="fa-solid fa-lock mr-1" style="color:#b7ff45"></i>
+          VoltGrid Admin
+        </span>
+      </footer>
+
+    </section>
+
+  </div>
+</main>
+{% endblock %}
